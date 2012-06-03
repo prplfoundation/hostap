@@ -5167,7 +5167,7 @@ static int wpa_driver_nl80211_ibss(struct wpa_driver_nl80211_data *drv,
 				   struct wpa_driver_associate_params *params)
 {
 	struct nl_msg *msg;
-	int ret = -1;
+	int ret = -1, i;
 	int count = 0;
 
 	wpa_printf(MSG_DEBUG, "nl80211: Join IBSS (ifindex=%d)", drv->ifindex);
@@ -5193,6 +5193,37 @@ retry:
 	if (nl80211_put_freq_params(msg, &params->freq) < 0 ||
 	    nl80211_put_beacon_int(msg, params->beacon_int))
 		goto fail;
+
+	if (params->fixed_freq) {
+		wpa_printf(MSG_DEBUG, "  * fixed_freq");
+		nla_put_flag(msg, NL80211_ATTR_FREQ_FIXED);
+	}
+
+	if (params->beacon_int > 0) {
+		wpa_printf(MSG_DEBUG, "  * beacon_int=%d",
+			   params->beacon_int);
+		nla_put_u32(msg, NL80211_ATTR_BEACON_INTERVAL,
+			    params->beacon_int);
+	}
+
+	if (params->rates[0] > 0) {
+		wpa_printf(MSG_DEBUG, "  * basic_rates:");
+		i = 0;
+		while (i < NL80211_MAX_SUPP_RATES &&
+		       params->rates[i] > 0) {
+			wpa_printf(MSG_DEBUG, "    %.1f",
+				   (double)params->rates[i] / 2);
+			i++;
+		}
+		nla_put(msg, NL80211_ATTR_BSS_BASIC_RATES, i,
+			params->rates);
+	}
+
+	if (params->mcast_rate > 0) {
+		wpa_printf(MSG_DEBUG, "  * mcast_rate=%.1f",
+			   (double)params->mcast_rate / 10);
+		nla_put_u32(msg, NL80211_ATTR_MCAST_RATE, params->mcast_rate);
+	}
 
 	ret = nl80211_set_conn_keys(params, msg);
 	if (ret)
