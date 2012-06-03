@@ -19,6 +19,7 @@
 
 #define WPA_SUPPLICANT_DRIVER_VERSION 4
 
+#include "ap/sta_info.h"
 #include "common/defs.h"
 #include "common/ieee802_11_defs.h"
 #include "common/wpa_common.h"
@@ -773,6 +774,9 @@ struct wpa_driver_associate_params {
 	 * This can be %NULL, if ap_scan=2 mode is used and the driver is
 	 * responsible for selecting with which BSS to associate. */
 	const u8 *bssid;
+
+	unsigned char rates[WLAN_SUPP_RATES_MAX];
+	int mcast_rate;
 
 	/**
 	 * bssid_hint - BSSID of a proposed AP

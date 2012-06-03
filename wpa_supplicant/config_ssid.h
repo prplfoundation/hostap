@@ -10,8 +10,10 @@
 #define CONFIG_SSID_H
 
 #include "common/defs.h"
+#include "ap/sta_info.h"
 #include "utils/list.h"
 #include "eap_peer/eap_config.h"
+#include "drivers/nl80211_copy.h"
 
 
 #define DEFAULT_EAP_WORKAROUND ((unsigned int) -1)
@@ -756,6 +758,9 @@ struct wpa_ssid {
 	 * dereferences since it may not be updated in all cases.
 	 */
 	void *parent_cred;
+
+	unsigned char rates[WLAN_SUPP_RATES_MAX];
+	double mcast_rate;
 
 #ifdef CONFIG_MACSEC
 	/**

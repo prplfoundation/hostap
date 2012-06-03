@@ -3113,6 +3113,12 @@ static void wpas_start_assoc_cb(struct wpa_radio_work *work, int deinit)
 			params.beacon_int = ssid->beacon_int;
 		else
 			params.beacon_int = wpa_s->conf->beacon_int;
+		i = 0;
+		while (i < WLAN_SUPP_RATES_MAX) {
+			params.rates[i] = ssid->rates[i];
+			i++;
+		}
+		params.mcast_rate = ssid->mcast_rate;
 	}
 
 	params.pairwise_suite = cipher_pairwise;
