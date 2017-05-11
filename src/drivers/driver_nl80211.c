@@ -9331,6 +9331,18 @@ static int nl80211_put_mesh_id(struct nl_msg *msg, const u8 *mesh_id,
 }
 
 
+static int nl80211_put_mcast_rate(struct nl_msg *msg, int mcast_rate)
+{
+	if (mcast_rate > 0) {
+		wpa_printf(MSG_DEBUG, "  * mcast_rate=%.1f",
+			   (double)mcast_rate / 10);
+		return nla_put_u32(msg, NL80211_ATTR_MCAST_RATE, mcast_rate);
+	}
+
+	return 0;
+}
+
+
 static int nl80211_put_mesh_config(struct nl_msg *msg,
 				   struct wpa_driver_mesh_bss_params *params)
 {
@@ -9392,6 +9404,7 @@ static int nl80211_join_mesh(struct i802_bss *bss,
 	    nl80211_put_basic_rates(msg, params->basic_rates) ||
 	    nl80211_put_mesh_id(msg, params->meshid, params->meshid_len) ||
 	    nl80211_put_beacon_int(msg, params->beacon_int) ||
+	    nl80211_put_mcast_rate(msg, params->mcast_rate) ||
 	    nl80211_put_dtim_period(msg, params->dtim_period))
 		goto fail;
 
