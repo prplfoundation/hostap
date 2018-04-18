@@ -2174,9 +2174,15 @@ void ibss_mesh_setup_freq(struct wpa_supplicant *wpa_s,
 		if (!dfs_enabled)
 			return;
 
+	freq->channel = pri_chan->chan;
+
 #ifdef CONFIG_HT_OVERRIDES
-	if (ssid->disable_ht40)
-		return;
+	if (ssid->disable_ht40) {
+		if (ssid->disable_vht)
+			return;
+		else
+			goto skip_ht40;
+	}
 #endif /* CONFIG_HT_OVERRIDES */
 
 	/* Check/setup HT40+/HT40- */
@@ -2203,8 +2209,6 @@ void ibss_mesh_setup_freq(struct wpa_supplicant *wpa_s,
 	if (sec_chan->flag & (HOSTAPD_CHAN_RADAR | HOSTAPD_CHAN_NO_IR))
 		if (!dfs_enabled)
 			return;
-
-	freq->channel = pri_chan->chan;
 
 	if (ht40 == -1) {
 		if (!(pri_chan->flag & HOSTAPD_CHAN_HT40MINUS))
@@ -2249,6 +2253,7 @@ void ibss_mesh_setup_freq(struct wpa_supplicant *wpa_s,
 		wpa_scan_results_free(scan_res);
 	}
 
+skip_ht40:
 	wpa_printf(MSG_DEBUG,
 		   "IBSS/mesh: setup freq channel %d, sec_channel_offset %d",
 		   freq->channel, freq->sec_channel_offset);
@@ -2344,7 +2349,10 @@ void ibss_mesh_setup_freq(struct wpa_supplicant *wpa_s,
 		}
 	} else if (ssid->max_oper_chwidth == VHT_CHANWIDTH_USE_HT) {
 		chwidth = VHT_CHANWIDTH_USE_HT;
-		seg0 = vht80[j] + 2;
+		if (ssid->disable_ht40)
+			seg0 = 0;
+		else
+			seg0 = vht80[j] + 2;
 	}
 
 	if (hostapd_set_freq_params(&vht_freq, mode->mode, freq->freq,
