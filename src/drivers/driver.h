@@ -1375,6 +1375,7 @@ struct wpa_driver_mesh_bss_params {
 #define WPA_DRIVER_MESH_CONF_FLAG_MAX_PEER_LINKS	0x00000004
 #define WPA_DRIVER_MESH_CONF_FLAG_HT_OP_MODE		0x00000008
 #define WPA_DRIVER_MESH_CONF_FLAG_RSSI_THRESHOLD	0x00000010
+#define WPA_DRIVER_MESH_CONF_FLAG_FORWARDING		0x00000020
 	/*
 	 * TODO: Other mesh configuration parameters would go here.
 	 * See NL80211_MESHCONF_* for all the mesh config parameters.
@@ -1384,6 +1385,7 @@ struct wpa_driver_mesh_bss_params {
 	int peer_link_timeout;
 	int max_peer_links;
 	int rssi_threshold;
+	int forwarding;
 	u16 ht_opmode;
 };
 

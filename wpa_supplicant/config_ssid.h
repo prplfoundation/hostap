@@ -500,6 +500,11 @@ struct wpa_ssid {
 	int dot11MeshConfirmTimeout; /* msec */
 	int dot11MeshHoldingTimeout; /* msec */
 
+	/**
+	 * Mesh network layer-2 forwarding
+	 */
+	int mesh_fwding;
+
 	int ht;
 	int ht40;
 
