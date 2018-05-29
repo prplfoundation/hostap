@@ -336,9 +336,6 @@ static int wpa_supplicant_mesh_init(struct wpa_supplicant *wpa_s,
 		return -1;
 	}
 
-	if (wpas_mesh_init_rsn(wpa_s))
-		goto out_free;
-
 	wpa_supplicant_conf_ap_ht(wpa_s, ssid, conf);
 
 	return 0;
@@ -383,6 +380,12 @@ void wpas_join_mesh(struct wpa_supplicant *wpa_s)
 	struct wpa_driver_mesh_join_params *params = wpa_s->mesh_params;
 	struct wpa_ssid *ssid = wpa_s->current_ssid;
 	int ret = 0;
+
+	if (wpas_mesh_init_rsn(wpa_s)) {
+		wpa_printf(MSG_ERROR, "Init RSN failed. Deinit mesh...");
+		wpa_supplicant_mesh_deinit(wpa_s);
+		return;
+	}
 
 	if (ssid->key_mgmt & WPA_KEY_MGMT_SAE) {
 		wpa_s->pairwise_cipher = wpa_s->mesh_rsn->pairwise_cipher;
