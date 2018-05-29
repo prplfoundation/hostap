@@ -7247,6 +7247,10 @@ static int wpa_driver_nl80211_send_action(struct i802_bss *bss,
 	struct wpa_driver_nl80211_data *drv = bss->drv;
 	int ret = -1;
 	u8 *buf;
+	int offchanok = 1;
+	u16 num_modes, flags;
+	struct hostapd_hw_modes *modes;
+	u8 dfs_domain;
 	struct ieee80211_hdr *hdr;
 
 	wpa_printf(MSG_DEBUG, "nl80211: Send Action frame (ifindex=%d, "
@@ -7271,7 +7275,11 @@ static int wpa_driver_nl80211_send_action(struct i802_bss *bss,
 	} else {
 		os_memset(bss->rand_addr, 0, ETH_ALEN);
 	}
-
+	if (is_mesh_interface(drv->nlmode) &&
+	    (modes = nl80211_get_hw_feature_data(bss, &num_modes, &flags,
+						 &dfs_domain)) &&
+	    ieee80211_is_dfs(freq, modes, num_modes))
+		offchanok = 0;
 	if (is_ap_interface(drv->nlmode) &&
 	    (!(drv->capa.flags & WPA_DRIVER_FLAGS_OFFCHANNEL_TX) ||
 	     (int) freq == bss->freq || drv->device_ap_sme ||
@@ -7283,7 +7291,7 @@ static int wpa_driver_nl80211_send_action(struct i802_bss *bss,
 		ret = nl80211_send_frame_cmd(bss, freq, wait_time, buf,
 					     24 + data_len,
 					     &drv->send_action_cookie,
-					     no_cck, 0, 1, NULL, 0);
+					     no_cck, 0, offchanok, NULL, 0);
 
 	os_free(buf);
 	return ret;
