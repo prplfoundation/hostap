@@ -217,6 +217,7 @@ static int wpa_supplicant_mesh_init(struct wpa_supplicant *wpa_s,
 	if (!ifmsh)
 		return -ENOMEM;
 
+	ifmsh->owner = wpa_s;
 	ifmsh->drv_flags = wpa_s->drv_flags;
 	ifmsh->num_bss = 1;
 	ifmsh->bss = os_calloc(wpa_s->ifmsh->num_bss,
@@ -234,6 +235,8 @@ static int wpa_supplicant_mesh_init(struct wpa_supplicant *wpa_s,
 	bss->drv_priv = wpa_s->drv_priv;
 	bss->iface = ifmsh;
 	bss->mesh_sta_free_cb = mesh_mpm_free_sta;
+	bss->setup_complete_cb = wpas_mesh_complete_cb;
+	bss->setup_complete_cb_ctx = wpa_s;
 	frequency = ssid->frequency;
 	if (frequency != freq->freq &&
 	    frequency == freq->freq + freq->sec_channel_offset * 20) {
@@ -375,8 +378,9 @@ void wpa_supplicant_mesh_add_scan_ie(struct wpa_supplicant *wpa_s,
 }
 
 
-void wpas_join_mesh(struct wpa_supplicant *wpa_s)
+void wpas_mesh_complete_cb(void *ctx)
 {
+	struct wpa_supplicant *wpa_s = (struct wpa_supplicant *)ctx;
 	struct wpa_driver_mesh_join_params *params = wpa_s->mesh_params;
 	struct wpa_ssid *ssid = wpa_s->current_ssid;
 	int ret = 0;
@@ -498,7 +502,6 @@ int wpa_supplicant_join_mesh(struct wpa_supplicant *wpa_s,
 		goto out;
 	}
 
-	wpas_join_mesh(wpa_s);
 out:
 	return ret;
 }
