@@ -337,7 +337,10 @@ static int wpa_supplicant_mesh_init(struct wpa_supplicant *wpa_s,
 			  rate_len * sizeof(int));
 		conf->basic_rates[rate_len] = -1;
 	}
-
+	/* Do not allow primary/secondary channel switch in mesh mode,
+	  * since mesh is not able to establish a physical link for it
+	  */
+	conf->no_pri_sec_switch = 1;
 	wpa_supplicant_conf_ap_ht(wpa_s, ssid, conf);
 
 	if (wpa_drv_init_mesh(wpa_s)) {
