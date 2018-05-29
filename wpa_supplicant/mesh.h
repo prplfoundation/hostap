@@ -22,6 +22,7 @@ int wpas_mesh_peer_remove(struct wpa_supplicant *wpa_s, const u8 *addr);
 int wpas_mesh_peer_add(struct wpa_supplicant *wpa_s, const u8 *addr,
 		       int duration);
 void wpas_join_mesh(struct wpa_supplicant *wpa_s);
+int wpas_mesh_init_rsn(struct wpa_supplicant *wpa_s);
 
 #ifdef CONFIG_MESH
 
