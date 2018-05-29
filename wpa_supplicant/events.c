@@ -3840,7 +3840,7 @@ static void wpas_event_dfs_cac_started(struct wpa_supplicant *wpa_s,
 				       struct dfs_event *radar)
 {
 #if defined(NEED_AP_MLME) && defined(CONFIG_AP)
-	if (wpa_s->ap_iface) {
+	if (wpa_s->ap_iface || wpa_s->ifmsh) {
 		wpas_ap_event_dfs_cac_started(wpa_s, radar);
 	} else
 #endif /* NEED_AP_MLME && CONFIG_AP */
@@ -3861,7 +3861,7 @@ static void wpas_event_dfs_cac_finished(struct wpa_supplicant *wpa_s,
 					struct dfs_event *radar)
 {
 #if defined(NEED_AP_MLME) && defined(CONFIG_AP)
-	if (wpa_s->ap_iface) {
+	if (wpa_s->ap_iface || wpa_s->ifmsh) {
 		wpas_ap_event_dfs_cac_finished(wpa_s, radar);
 	} else
 #endif /* NEED_AP_MLME && CONFIG_AP */
@@ -3877,7 +3877,7 @@ static void wpas_event_dfs_cac_aborted(struct wpa_supplicant *wpa_s,
 				       struct dfs_event *radar)
 {
 #if defined(NEED_AP_MLME) && defined(CONFIG_AP)
-	if (wpa_s->ap_iface) {
+	if (wpa_s->ap_iface || wpa_s->ifmsh) {
 		wpas_ap_event_dfs_cac_aborted(wpa_s, radar);
 	} else
 #endif /* NEED_AP_MLME && CONFIG_AP */
@@ -4328,6 +4328,7 @@ void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
 #ifdef CONFIG_AP
 		if (wpa_s->current_ssid->mode == WPAS_MODE_AP ||
 		    wpa_s->current_ssid->mode == WPAS_MODE_P2P_GO ||
+		    wpa_s->current_ssid->mode == WPAS_MODE_MESH ||
 		    wpa_s->current_ssid->mode ==
 		    WPAS_MODE_P2P_GROUP_FORMATION) {
 			wpas_ap_ch_switch(wpa_s, data->ch_switch.freq,
