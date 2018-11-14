@@ -15,6 +15,7 @@
 #include "utils/common.h"
 #include "utils/eloop.h"
 #include "utils/uuid.h"
+#include "utils/build_features.h"
 #include "crypto/random.h"
 #include "crypto/tls.h"
 #include "common/version.h"
@@ -682,7 +683,7 @@ int main(int argc, char *argv[])
 	wpa_supplicant_event = hostapd_wpa_event;
 	wpa_supplicant_event_global = hostapd_wpa_event_global;
 	for (;;) {
-		c = getopt(argc, argv, "b:Bde:f:hi:KP:sSTtu:vg:G:");
+		c = getopt(argc, argv, "b:Bde:f:hi:KP:sSTtu:g:G:v::");
 		if (c < 0)
 			break;
 		switch (c) {
@@ -719,6 +720,8 @@ int main(int argc, char *argv[])
 			break;
 #endif /* CONFIG_DEBUG_LINUX_TRACING */
 		case 'v':
+			if (optarg)
+				exit(!has_feature(optarg));
 			show_version();
 			exit(1);
 			break;
