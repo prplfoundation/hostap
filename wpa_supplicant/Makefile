@@ -1921,23 +1921,23 @@ wpa_supplicant_multi.a: .config $(BCHECK) $(OBJS) $(EXTRA_progs)
 	@$(AR) cr $@ wpa_supplicant_multi.o $(OBJS)
 
 wpa_supplicant: $(BCHECK) $(OBJS) $(EXTRA_progs)
-	$(Q)$(LDO) $(LDFLAGS) -o wpa_supplicant $(OBJS) $(LIBS) $(EXTRALIBS)
+	+$(Q)$(LDO) $(LDFLAGS) -o wpa_supplicant $(OBJS) $(LIBS) $(EXTRALIBS)
 	@$(E) "  LD " $@
 
 eapol_test: $(OBJS_t)
-	$(Q)$(LDO) $(LDFLAGS) -o eapol_test $(OBJS_t) $(LIBS)
+	+$(Q)$(LDO) $(LDFLAGS) -o eapol_test $(OBJS_t) $(LIBS)
 	@$(E) "  LD " $@
 
 preauth_test: $(OBJS_t2)
-	$(Q)$(LDO) $(LDFLAGS) -o preauth_test $(OBJS_t2) $(LIBS)
+	+$(Q)$(LDO) $(LDFLAGS) -o preauth_test $(OBJS_t2) $(LIBS)
 	@$(E) "  LD " $@
 
 wpa_passphrase: $(OBJS_p)
-	$(Q)$(LDO) $(LDFLAGS) -o wpa_passphrase $(OBJS_p) $(LIBS_p) $(LIBS)
+	+$(Q)$(LDO) $(LDFLAGS) -o wpa_passphrase $(OBJS_p) $(LIBS_p) $(LIBS)
 	@$(E) "  LD " $@
 
 wpa_cli: $(OBJS_c)
-	$(Q)$(LDO) $(LDFLAGS) -o wpa_cli $(OBJS_c) $(LIBS_c)
+	+$(Q)$(LDO) $(LDFLAGS) -o wpa_cli $(OBJS_c) $(LIBS_c)
 	@$(E) "  LD " $@
 
 LIBCTRL += ../src/common/wpa_ctrl.o

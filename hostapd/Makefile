@@ -1290,14 +1290,14 @@ hostapd_multi.a: $(BCHECK) $(OBJS)
 	@$(AR) cr $@ hostapd_multi.o $(OBJS)
 
 hostapd: $(BCHECK) $(OBJS)
-	$(Q)$(CC) $(LDFLAGS) -o hostapd $(OBJS) $(LIBS)
+	+$(Q)$(CC) $(LDFLAGS) -o hostapd $(OBJS) $(LIBS)
 	@$(E) "  LD " $@
 
 ifdef CONFIG_WPA_TRACE
 OBJS_c += ../src/utils/trace.o
 endif
 hostapd_cli: $(OBJS_c)
-	$(Q)$(CC) $(LDFLAGS) -o hostapd_cli $(OBJS_c) $(LIBS_c)
+	+$(Q)$(CC) $(LDFLAGS) -o hostapd_cli $(OBJS_c) $(LIBS_c)
 	@$(E) "  LD " $@
 
 NOBJS = nt_password_hash.o ../src/crypto/ms_funcs.o $(SHA1OBJS)
