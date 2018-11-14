@@ -725,7 +725,7 @@ void sta_track_claim_taxonomy_info(struct hostapd_iface *iface, const u8 *addr,
 
 void handle_probe_req(struct hostapd_data *hapd,
 		      const struct ieee80211_mgmt *mgmt, size_t len,
-		      int ssi_signal)
+		      struct hostapd_frame_info *fi)
 {
 	u8 *resp;
 	struct ieee802_11_elems elems;
@@ -734,6 +734,7 @@ void handle_probe_req(struct hostapd_data *hapd,
 	size_t i, resp_len;
 	int noack;
 	enum ssid_match_result res;
+	int ssi_signal = fi->ssi_signal;
 	int ret;
 	u16 csa_offs[2];
 	size_t csa_offs_len;
@@ -742,6 +743,12 @@ void handle_probe_req(struct hostapd_data *hapd,
 	struct hostapd_sta_wpa_psk_short *psk = NULL;
 	char *identity = NULL;
 	char *radius_cui = NULL;
+	struct hostapd_ubus_request req = {
+		.type = HOSTAPD_UBUS_PROBE_REQ,
+		.mgmt_frame = mgmt,
+		.frame_info = fi,
+		.elems = &elems,
+	};
 
 	if (len < IEEE80211_HDRLEN)
 		return;
@@ -918,6 +925,12 @@ void handle_probe_req(struct hostapd_data *hapd,
 		return;
 	}
 #endif /* CONFIG_P2P */
+
+	if (hostapd_ubus_handle_event(hapd, &req)) {
+		wpa_printf(MSG_DEBUG, "Probe request for " MACSTR " rejected by ubus handler.\n",
+		       MAC2STR(mgmt->sa));
+		return;
+	}
 
 	/* TODO: verify that supp_rates contains at least one matching rate
 	 * with AP configuration */

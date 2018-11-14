@@ -13,6 +13,7 @@
 #include "utils/list.h"
 #include "ap_config.h"
 #include "drivers/driver.h"
+#include "ubus.h"
 
 #define OCE_STA_CFON_ENABLED(hapd) \
 	((hapd->conf->oce & OCE_STA_CFON) && \
@@ -136,6 +137,7 @@ struct hostapd_data {
 	struct hostapd_iface *iface;
 	struct hostapd_config *iconf;
 	struct hostapd_bss_config *conf;
+	struct hostapd_ubus_bss ubus;
 	int interface_added; /* virtual interface added for this BSS */
 	unsigned int started:1;
 	unsigned int disabled:1;
@@ -547,6 +549,7 @@ hostapd_alloc_bss_data(struct hostapd_iface *hapd_iface,
 		       struct hostapd_bss_config *bss);
 int hostapd_setup_interface(struct hostapd_iface *iface);
 int hostapd_setup_interface_complete(struct hostapd_iface *iface, int err);
+void hostapd_set_own_neighbor_report(struct hostapd_data *hapd);
 void hostapd_interface_deinit(struct hostapd_iface *iface);
 void hostapd_interface_free(struct hostapd_iface *iface);
 struct hostapd_iface * hostapd_alloc_iface(void);

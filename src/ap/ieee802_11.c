@@ -1743,12 +1743,13 @@ ieee802_11_set_radius_info(struct hostapd_data *hapd, struct sta_info *sta,
 
 
 static void handle_auth(struct hostapd_data *hapd,
-			const struct ieee80211_mgmt *mgmt, size_t len)
+			const struct ieee80211_mgmt *mgmt, size_t len,
+			struct hostapd_frame_info *fi)
 {
 	u16 auth_alg, auth_transaction, status_code;
 	u16 resp = WLAN_STATUS_SUCCESS;
 	struct sta_info *sta = NULL;
-	int res, reply_res;
+	int res, reply_res, ubus_resp;
 	u16 fc;
 	const u8 *challenge = NULL;
 	u32 session_timeout, acct_interim_interval;
@@ -1759,6 +1760,11 @@ static void handle_auth(struct hostapd_data *hapd,
 	char *identity = NULL;
 	char *radius_cui = NULL;
 	u16 seq_ctrl;
+	struct hostapd_ubus_request req = {
+		.type = HOSTAPD_UBUS_AUTH_REQ,
+		.mgmt_frame = mgmt,
+		.frame_info = fi,
+	};
 
 	if (len < IEEE80211_HDRLEN + sizeof(mgmt->u.auth)) {
 		wpa_printf(MSG_INFO, "handle_auth - too short payload (len=%lu)",
@@ -1917,6 +1923,13 @@ static void handle_auth(struct hostapd_data *hapd,
 			"Ignore Authentication frame from " MACSTR
 			" due to ACL reject", MAC2STR(mgmt->sa));
 		resp = WLAN_STATUS_UNSPECIFIED_FAILURE;
+		goto fail;
+	}
+	ubus_resp = hostapd_ubus_handle_event(hapd, &req);
+	if (ubus_resp) {
+		wpa_printf(MSG_DEBUG, "Station " MACSTR " rejected by ubus handler.\n",
+			MAC2STR(mgmt->sa));
+		resp = ubus_resp > 0 ? (u16) ubus_resp : WLAN_STATUS_UNSPECIFIED_FAILURE;
 		goto fail;
 	}
 	if (res == HOSTAPD_ACL_PENDING)
@@ -3209,12 +3222,12 @@ void fils_hlp_timeout(void *eloop_ctx, void *eloop_data)
 
 static void handle_assoc(struct hostapd_data *hapd,
 			 const struct ieee80211_mgmt *mgmt, size_t len,
-			 int reassoc)
+			 int reassoc, struct hostapd_frame_info *fi)
 {
 	u16 capab_info, listen_interval, seq_ctrl, fc;
 	u16 resp = WLAN_STATUS_SUCCESS, reply_res;
 	const u8 *pos;
-	int left, i;
+	int left, i, ubus_resp;
 	struct sta_info *sta;
 	u8 *tmp = NULL;
 	struct hostapd_sta_wpa_psk_short *psk = NULL;
@@ -3223,6 +3236,11 @@ static void handle_assoc(struct hostapd_data *hapd,
 #ifdef CONFIG_FILS
 	int delay_assoc = 0;
 #endif /* CONFIG_FILS */
+	struct hostapd_ubus_request req = {
+		.type = HOSTAPD_UBUS_ASSOC_REQ,
+		.mgmt_frame = mgmt,
+		.frame_info = fi,
+	};
 
 	if (len < IEEE80211_HDRLEN + (reassoc ? sizeof(mgmt->u.reassoc_req) :
 				      sizeof(mgmt->u.assoc_req))) {
@@ -3393,6 +3411,14 @@ static void handle_assoc(struct hostapd_data *hapd,
 		goto fail;
 	}
 #endif /* CONFIG_MBO */
+
+	ubus_resp = hostapd_ubus_handle_event(hapd, &req);
+	if (ubus_resp) {
+		wpa_printf(MSG_DEBUG, "Station " MACSTR " assoc rejected by ubus handler.\n",
+		       MAC2STR(mgmt->sa));
+		resp = ubus_resp > 0 ? (u16) ubus_resp : WLAN_STATUS_UNSPECIFIED_FAILURE;
+		goto fail;
+	}
 
 	/*
 	 * sta->capability is used in check_assoc_ies() for RRM enabled
@@ -3607,6 +3633,7 @@ static void handle_disassoc(struct hostapd_data *hapd,
 	wpa_printf(MSG_DEBUG, "disassocation: STA=" MACSTR " reason_code=%d",
 		   MAC2STR(mgmt->sa),
 		   le_to_host16(mgmt->u.disassoc.reason_code));
+	hostapd_ubus_notify(hapd, "disassoc", mgmt->sa);
 
 	sta = ap_get_sta(hapd, mgmt->sa);
 	if (sta == NULL) {
@@ -3671,6 +3698,8 @@ static void handle_deauth(struct hostapd_data *hapd,
 	wpa_msg(hapd->msg_ctx, MSG_DEBUG, "deauthentication: STA=" MACSTR
 		" reason_code=%d",
 		MAC2STR(mgmt->sa), le_to_host16(mgmt->u.deauth.reason_code));
+
+	hostapd_ubus_notify(hapd, "deauth", mgmt->sa);
 
 	sta = ap_get_sta(hapd, mgmt->sa);
 	if (sta == NULL) {
@@ -3991,7 +4020,7 @@ int ieee802_11_mgmt(struct hostapd_data *hapd, const u8 *buf, size_t len,
 
 
 	if (stype == WLAN_FC_STYPE_PROBE_REQ) {
-		handle_probe_req(hapd, mgmt, len, ssi_signal);
+		handle_probe_req(hapd, mgmt, len, fi);
 		return 1;
 	}
 
@@ -4011,17 +4040,17 @@ int ieee802_11_mgmt(struct hostapd_data *hapd, const u8 *buf, size_t len,
 	switch (stype) {
 	case WLAN_FC_STYPE_AUTH:
 		wpa_printf(MSG_DEBUG, "mgmt::auth");
-		handle_auth(hapd, mgmt, len);
+		handle_auth(hapd, mgmt, len, fi);
 		ret = 1;
 		break;
 	case WLAN_FC_STYPE_ASSOC_REQ:
 		wpa_printf(MSG_DEBUG, "mgmt::assoc_req");
-		handle_assoc(hapd, mgmt, len, 0);
+		handle_assoc(hapd, mgmt, len, 0, fi);
 		ret = 1;
 		break;
 	case WLAN_FC_STYPE_REASSOC_REQ:
 		wpa_printf(MSG_DEBUG, "mgmt::reassoc_req");
-		handle_assoc(hapd, mgmt, len, 1);
+		handle_assoc(hapd, mgmt, len, 1, fi);
 		ret = 1;
 		break;
 	case WLAN_FC_STYPE_DISASSOC:
