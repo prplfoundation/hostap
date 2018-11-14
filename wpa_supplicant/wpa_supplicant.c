@@ -125,6 +125,55 @@ static void wpas_update_fils_connect_params(struct wpa_supplicant *wpa_s);
 #endif /* CONFIG_FILS && IEEE8021X_EAPOL */
 
 
+static int hostapd_stop(struct wpa_supplicant *wpa_s)
+{
+	const char *cmd = "STOP_AP";
+	char buf[256];
+	size_t len = sizeof(buf);
+
+	if (wpa_ctrl_request(wpa_s->hostapd, cmd, os_strlen(cmd), buf, &len, NULL) < 0) {
+		wpa_printf(MSG_ERROR, "\nFailed to stop hostapd AP interfaces\n");
+		return -1;
+	}
+	return 0;
+}
+
+static int hostapd_reload(struct wpa_supplicant *wpa_s, struct wpa_bss *bss)
+{
+	char *cmd = NULL;
+	char buf[256];
+	size_t len = sizeof(buf);
+	enum hostapd_hw_mode hw_mode;
+	u8 channel;
+	int sec_chan = 0;
+	int ret;
+
+	if (!bss)
+		return -1;
+
+	if (bss->ht_param & HT_INFO_HT_PARAM_STA_CHNL_WIDTH) {
+		int sec = bss->ht_param & HT_INFO_HT_PARAM_SECONDARY_CHNL_OFF_MASK;
+		if (sec == HT_INFO_HT_PARAM_SECONDARY_CHNL_ABOVE)
+			sec_chan = 1;
+		else if (sec ==  HT_INFO_HT_PARAM_SECONDARY_CHNL_BELOW)
+			sec_chan = -1;
+	}
+
+	hw_mode = ieee80211_freq_to_chan(bss->freq, &channel);
+	if (asprintf(&cmd, "UPDATE channel=%d sec_chan=%d hw_mode=%d",
+		     channel, sec_chan, hw_mode) < 0)
+		return -1;
+
+	ret = wpa_ctrl_request(wpa_s->hostapd, cmd, os_strlen(cmd), buf, &len, NULL);
+	free(cmd);
+
+	if (ret < 0) {
+		wpa_printf(MSG_ERROR, "\nFailed to reload hostapd AP interfaces\n");
+		return -1;
+	}
+	return 0;
+}
+
 /* Configure default/group WEP keys for static WEP */
 int wpa_set_wep_keys(struct wpa_supplicant *wpa_s, struct wpa_ssid *ssid)
 {
@@ -920,12 +969,16 @@ void wpa_supplicant_set_state(struct wpa_supplicant *wpa_s,
 
 		sme_sched_obss_scan(wpa_s, 1);
 
+		if (wpa_s->hostapd)
+			hostapd_reload(wpa_s, wpa_s->current_bss);
 #if defined(CONFIG_FILS) && defined(IEEE8021X_EAPOL)
 		if (!fils_hlp_sent && ssid && ssid->eap.erp)
 			wpas_update_fils_connect_params(wpa_s);
 #endif /* CONFIG_FILS && IEEE8021X_EAPOL */
 	} else if (state == WPA_DISCONNECTED || state == WPA_ASSOCIATING ||
 		   state == WPA_ASSOCIATED) {
+		if (wpa_s->hostapd)
+			hostapd_stop(wpa_s);
 		wpa_s->new_connection = 1;
 		wpa_drv_set_operstate(wpa_s, 0);
 #ifndef IEEE8021X_EAPOL
@@ -1977,6 +2030,8 @@ void wpa_supplicant_associate(struct wpa_supplicant *wpa_s,
 			wpa_ssid_txt(ssid->ssid, ssid->ssid_len),
 			ssid->id);
 		wpas_notify_mesh_group_started(wpa_s, ssid);
+		if (wpa_s->hostapd)
+			hostapd_reload(wpa_s, wpa_s->current_bss);
 #else /* CONFIG_MESH */
 		wpa_msg(wpa_s, MSG_ERROR,
 			"mesh mode support not included in the build");
@@ -5483,6 +5538,16 @@ static int wpa_supplicant_init_iface(struct wpa_supplicant *wpa_s,
 			   sizeof(wpa_s->bridge_ifname));
 	}
 
+	if (iface->hostapd_ctrl) {
+		wpa_s->hostapd = wpa_ctrl_open(iface->hostapd_ctrl);
+		if (!wpa_s->hostapd) {
+			wpa_printf(MSG_ERROR, "\nFailed to connect to hostapd\n");
+			return -1;
+		}
+		if (hostapd_stop(wpa_s) < 0)
+			return -1;
+	}
+
 	/* RSNA Supplicant Key Management - INITIALIZE */
 	eapol_sm_notify_portEnabled(wpa_s->eapol, FALSE);
 	eapol_sm_notify_portValid(wpa_s->eapol, FALSE);
@@ -5803,6 +5868,11 @@ static void wpa_supplicant_deinit_iface(struct wpa_supplicant *wpa_s,
 
 	if (terminate)
 		wpa_msg(wpa_s, MSG_INFO, WPA_EVENT_TERMINATING);
+
+	if (wpa_s->hostapd) {
+		wpa_ctrl_close(wpa_s->hostapd);
+		wpa_s->hostapd = NULL;
+	}
 
 	if (wpa_s->ctrl_iface) {
 		wpa_supplicant_ctrl_iface_deinit(wpa_s->ctrl_iface);

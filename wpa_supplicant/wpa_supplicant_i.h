@@ -101,6 +101,11 @@ struct wpa_interface {
 	const char *ifname;
 
 	/**
+	 * hostapd_ctrl - path to hostapd control socket for notification
+	 */
+	const char *hostapd_ctrl;
+
+	/**
 	 * bridge_ifname - Optional bridge interface name
 	 *
 	 * If the driver interface (ifname) is included in a Linux bridge
@@ -512,6 +517,8 @@ struct wpa_supplicant {
 	const void *binder_object_key;
 #endif /* CONFIG_CTRL_IFACE_BINDER */
 	char bridge_ifname[16];
+
+	struct wpa_ctrl *hostapd;
 
 	char *confname;
 	char *confanother;
