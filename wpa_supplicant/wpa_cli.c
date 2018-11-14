@@ -26,6 +26,9 @@
 #include <cutils/properties.h>
 #endif /* ANDROID */
 
+#ifndef CONFIG_P2P
+#define CONFIG_P2P
+#endif
 
 static const char *const wpa_cli_version =
 "wpa_cli v" VERSION_STR "\n"
