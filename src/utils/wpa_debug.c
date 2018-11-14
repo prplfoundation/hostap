@@ -205,7 +205,7 @@ void wpa_debug_close_linux_tracing(void)
  *
  * Note: New line '\n' is added to the end of the text when printing to stdout.
  */
-void wpa_printf(int level, const char *fmt, ...)
+void _wpa_printf(int level, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -252,8 +252,8 @@ void wpa_printf(int level, const char *fmt, ...)
 }
 
 
-static void _wpa_hexdump(int level, const char *title, const u8 *buf,
-			 size_t len, int show)
+void _wpa_hexdump(int level, const char *title, const u8 *buf,
+		  size_t len, int show)
 {
 	size_t i;
 
@@ -379,20 +379,8 @@ static void _wpa_hexdump(int level, const char *title, const u8 *buf,
 #endif /* CONFIG_ANDROID_LOG */
 }
 
-void wpa_hexdump(int level, const char *title, const void *buf, size_t len)
-{
-	_wpa_hexdump(level, title, buf, len, 1);
-}
-
-
-void wpa_hexdump_key(int level, const char *title, const void *buf, size_t len)
-{
-	_wpa_hexdump(level, title, buf, len, wpa_debug_show_keys);
-}
-
-
-static void _wpa_hexdump_ascii(int level, const char *title, const void *buf,
-			       size_t len, int show)
+void _wpa_hexdump_ascii(int level, const char *title, const void *buf,
+			size_t len, int show)
 {
 	size_t i, llen;
 	const u8 *pos = buf;
@@ -496,20 +484,6 @@ static void _wpa_hexdump_ascii(int level, const char *title, const void *buf,
 	}
 #endif /* CONFIG_DEBUG_FILE */
 #endif /* CONFIG_ANDROID_LOG */
-}
-
-
-void wpa_hexdump_ascii(int level, const char *title, const void *buf,
-		       size_t len)
-{
-	_wpa_hexdump_ascii(level, title, buf, len, 1);
-}
-
-
-void wpa_hexdump_ascii_key(int level, const char *title, const void *buf,
-			   size_t len)
-{
-	_wpa_hexdump_ascii(level, title, buf, len, wpa_debug_show_keys);
 }
 
 
@@ -628,7 +602,7 @@ void wpa_msg_register_ifname_cb(wpa_msg_get_ifname_func func)
 }
 
 
-void wpa_msg(void *ctx, int level, const char *fmt, ...)
+void _wpa_msg(void *ctx, int level, const char *fmt, ...)
 {
 	va_list ap;
 	char *buf;
@@ -666,7 +640,7 @@ void wpa_msg(void *ctx, int level, const char *fmt, ...)
 }
 
 
-void wpa_msg_ctrl(void *ctx, int level, const char *fmt, ...)
+void _wpa_msg_ctrl(void *ctx, int level, const char *fmt, ...)
 {
 	va_list ap;
 	char *buf;
