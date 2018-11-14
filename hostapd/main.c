@@ -591,6 +591,11 @@ fail:
 	return -1;
 }
 
+void hostapd_wpa_event(void *ctx, enum wpa_event_type event,
+                       union wpa_event_data *data);
+
+void hostapd_wpa_event_global(void *ctx, enum wpa_event_type event,
+ 				 union wpa_event_data *data);
 
 #ifdef CONFIG_WPS
 static int gen_uuid(const char *txt_addr)
@@ -674,6 +679,8 @@ int main(int argc, char *argv[])
 	hostapd_dpp_init_global(&interfaces);
 #endif /* CONFIG_DPP */
 
+	wpa_supplicant_event = hostapd_wpa_event;
+	wpa_supplicant_event_global = hostapd_wpa_event_global;
 	for (;;) {
 		c = getopt(argc, argv, "b:Bde:f:hi:KP:sSTtu:vg:G:");
 		if (c < 0)

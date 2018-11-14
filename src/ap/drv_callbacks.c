@@ -1523,8 +1523,8 @@ static void hostapd_event_wds_sta_interface_status(struct hostapd_data *hapd,
 }
 
 
-void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
-			  union wpa_event_data *data)
+void hostapd_wpa_event(void *ctx, enum wpa_event_type event,
+		       union wpa_event_data *data)
 {
 	struct hostapd_data *hapd = ctx;
 #ifndef CONFIG_NO_STDOUT_DEBUG
@@ -1753,7 +1753,7 @@ void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
 }
 
 
-void wpa_supplicant_event_global(void *ctx, enum wpa_event_type event,
+void hostapd_wpa_event_global(void *ctx, enum wpa_event_type event,
 				 union wpa_event_data *data)
 {
 	struct hapd_interfaces *interfaces = ctx;

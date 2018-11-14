@@ -5857,7 +5857,6 @@ struct wpa_interface * wpa_supplicant_match_iface(struct wpa_global *global,
 	return NULL;
 }
 
-
 /**
  * wpa_supplicant_match_existing - Match existing interfaces
  * @global: Pointer to global data from wpa_supplicant_init()
@@ -5894,6 +5893,11 @@ static int wpa_supplicant_match_existing(struct wpa_global *global)
 
 #endif /* CONFIG_MATCH_IFACE */
 
+extern void supplicant_event(void *ctx, enum wpa_event_type event,
+			     union wpa_event_data *data);
+
+extern void supplicant_event_global(void *ctx, enum wpa_event_type event,
+ 				 union wpa_event_data *data);
 
 /**
  * wpa_supplicant_add_iface - Add a new network interface
@@ -6150,6 +6154,8 @@ struct wpa_global * wpa_supplicant_init(struct wpa_params *params)
 #ifndef CONFIG_NO_WPA_MSG
 	wpa_msg_register_ifname_cb(wpa_supplicant_msg_ifname_cb);
 #endif /* CONFIG_NO_WPA_MSG */
+	wpa_supplicant_event = supplicant_event;
+	wpa_supplicant_event_global = supplicant_event_global;
 
 	if (params->wpa_debug_file_path)
 		wpa_debug_open_file(params->wpa_debug_file_path);

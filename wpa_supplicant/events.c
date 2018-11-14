@@ -4026,8 +4026,8 @@ static void wpas_event_assoc_reject(struct wpa_supplicant *wpa_s,
 }
 
 
-void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
-			  union wpa_event_data *data)
+void supplicant_event(void *ctx, enum wpa_event_type event,
+		      union wpa_event_data *data)
 {
 	struct wpa_supplicant *wpa_s = ctx;
 	int resched;
@@ -4796,7 +4796,7 @@ void wpa_supplicant_event(void *ctx, enum wpa_event_type event,
 }
 
 
-void wpa_supplicant_event_global(void *ctx, enum wpa_event_type event,
+void supplicant_event_global(void *ctx, enum wpa_event_type event,
 				 union wpa_event_data *data)
 {
 	struct wpa_supplicant *wpa_s;
