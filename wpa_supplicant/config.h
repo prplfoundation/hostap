@@ -374,6 +374,7 @@ struct wpa_cred {
 #define CFG_CHANGED_P2P_PASSPHRASE_LEN BIT(16)
 #define CFG_CHANGED_SCHED_SCAN_PLANS BIT(17)
 #define CFG_CHANGED_WOWLAN_TRIGGERS BIT(18)
+#define CFG_CHANGED_MULTI_AP_BACKHAUL_STA BIT(19)
 
 /**
  * struct wpa_config - wpa_supplicant configuration data
@@ -768,6 +769,9 @@ struct wpa_config {
 	int p2p_optimize_listen_chan;
 
 	struct wpabuf *wps_vendor_ext_m1;
+#ifdef CONFIG_MULTI_AP
+	int multi_ap_backhaul_sta;
+#endif /* CONFIG_MULTI_AP */
 
 #define MAX_WPS_VENDOR_EXT 10
 	/**
