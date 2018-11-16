@@ -473,6 +473,11 @@ static int wpa_supplicant_wps_cred(void *ctx,
 	wpa_config_set_network_defaults(ssid);
 	ssid->wps_run = wpa_s->wps_run;
 
+	if (wpa_s->conf->multi_ap_backhaul_sta)
+		ssid->multi_ap_backhaul_sta = 1;
+	else
+		ssid->multi_ap_backhaul_sta = 0;
+
 	os_free(ssid->ssid);
 	ssid->ssid = os_malloc(cred->ssid_len);
 	if (ssid->ssid) {
@@ -1181,6 +1186,8 @@ int wpas_wps_start_pbc(struct wpa_supplicant *wpa_s, const u8 *bssid,
 		return -1;
 	if (wpa_s->wps_fragment_size)
 		ssid->eap.fragment_size = wpa_s->wps_fragment_size;
+	if (wpa_s->conf->multi_ap_backhaul_sta)
+		ssid->multi_ap_backhaul_sta = 1;
 	wpa_supplicant_wps_event(wpa_s, WPS_EV_PBC_ACTIVE, NULL);
 	eloop_register_timeout(WPS_PBC_WALK_TIME, 0, wpas_wps_timeout,
 			       wpa_s, NULL);
@@ -1527,7 +1534,6 @@ static void wpas_wps_set_vendor_ext_m1(struct wpa_supplicant *wpa_s,
 	}
 }
 
-
 int wpas_wps_init(struct wpa_supplicant *wpa_s)
 {
 	struct wps_context *wps;
@@ -1568,6 +1574,8 @@ int wpas_wps_init(struct wpa_supplicant *wpa_s)
 		  WPS_DEV_TYPE_LEN * wps->dev.num_sec_dev_types);
 
 	wpas_wps_set_vendor_ext_m1(wpa_s, wps);
+
+	wps->multi_ap_backhaul_sta = wpa_s->conf->multi_ap_backhaul_sta;
 
 	wps->dev.os_version = WPA_GET_BE32(wpa_s->conf->os_version);
 	modes = wpa_s->hw.modes;
@@ -2204,6 +2212,9 @@ void wpas_wps_update_config(struct wpa_supplicant *wpa_s)
 
 	if (wpa_s->conf->changed_parameters & CFG_CHANGED_VENDOR_EXTENSION)
 		wpas_wps_set_vendor_ext_m1(wpa_s, wps);
+
+	if (wpa_s->conf->changed_parameters & CFG_CHANGED_MULTI_AP_BACKHAUL_STA)
+		wps->multi_ap_backhaul_sta = wpa_s->conf->multi_ap_backhaul_sta;
 
 	if (wpa_s->conf->changed_parameters & CFG_CHANGED_OS_VERSION)
 		wps->dev.os_version = WPA_GET_BE32(wpa_s->conf->os_version);

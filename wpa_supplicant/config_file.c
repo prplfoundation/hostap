@@ -1183,6 +1183,10 @@ static void wpa_config_write_global(FILE *f, struct wpa_config *config)
 			fprintf(f, "\n");
 		}
 	}
+
+	if (config->multi_ap_backhaul_sta)
+		fprintf(f, "multi_ap_backhaul_sta=%d\n", config->multi_ap_backhaul_sta);
+
 #endif /* CONFIG_WPS */
 #ifdef CONFIG_P2P
 	{
