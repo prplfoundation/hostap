@@ -4092,6 +4092,15 @@ struct wpa_driver_ops {
 	 */
 	int (*send_external_auth_status)(void *priv,
 					 struct external_auth *params);
+
+#ifdef CONFIG_MULTI_AP
+	/**
+	 * set_4addr - Enable/disable 4-address mode
+	 * @priv: Private driver interface data
+	 * @val: 0 for 4-addr disable, 1 for 4-addr enable
+	 */
+	int (*set_4addr)(void *priv, int val);
+#endif /* CONFIG_MULTI_AP */
 };
 
 /**

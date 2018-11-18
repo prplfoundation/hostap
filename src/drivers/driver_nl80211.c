@@ -10647,6 +10647,31 @@ fail:
 	return ret;
 }
 
+#ifdef CONFIG_MULTI_AP
+static int nl80211_set_4addr(void *priv, int val)
+{
+	struct i802_bss *bss = priv;
+	struct wpa_driver_nl80211_data *drv = bss->drv;
+	struct nl_msg *msg;
+	int ret = -ENOBUFS;
+
+	msg = nl80211_cmd_msg(drv->first_bss, 0, NL80211_CMD_SET_INTERFACE);
+	if (!msg || nla_put_u8(msg, NL80211_ATTR_4ADDR, val))
+		goto fail;
+
+	ret = send_and_recv_msgs(drv, msg, NULL, NULL);
+	msg = NULL;
+	if (!ret) {
+		return 0;
+	}
+
+fail:
+	nlmsg_free(msg);
+	wpa_printf(MSG_ERROR, "nl80211: Failed to set Multi-AP");
+
+	return ret;
+}
+#endif /* CONFIG_MULTI_AP */
 
 const struct wpa_driver_ops wpa_driver_nl80211_ops = {
 	.name = "nl80211",
@@ -10776,4 +10801,7 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
 	.get_ext_capab = nl80211_get_ext_capab,
 	.update_connect_params = nl80211_update_connection_params,
 	.send_external_auth_status = nl80211_send_external_auth_status,
+#ifdef CONFIG_MULTI_AP
+	.set_4addr = nl80211_set_4addr,
+#endif /* CONFIG_MULTI_AP */
 };

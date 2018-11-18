@@ -937,6 +937,14 @@ struct wpa_ssid {
 	 * the selection attempts for OWE BSS exceed the configured threshold.
 	 */
 	int owe_transition_bss_select_count;
+
+#ifdef CONFIG_MULTI_AP
+	/** multi_ap - Enable/disable Multi-AP backhaul STA functionality
+	 * 0 = disable Multi-AP
+	 * 1 = enable Multi-AP
+	 */
+	int multi_ap;
+#endif /* CONFIG_MULTI_AP */
 };
 
 #endif /* CONFIG_SSID_H */

@@ -39,7 +39,6 @@ static void sme_obss_scan_timeout(void *eloop_ctx, void *timeout_ctx);
 static void sme_stop_sa_query(struct wpa_supplicant *wpa_s);
 #endif /* CONFIG_IEEE80211W */
 
-
 #ifdef CONFIG_SAE
 
 static int index_within_array(const int *array, int idx)
@@ -1547,6 +1546,22 @@ void sme_associate(struct wpa_supplicant *wpa_s, enum wpas_mode mode,
 		wpabuf_free(owe_ie);
 	}
 #endif /* CONFIG_OWE */
+
+#ifdef CONFIG_MULTI_AP
+	if (wpa_s->current_ssid && wpa_s->current_ssid->multi_ap) {
+		size_t multi_ap_ie_len =
+			add_multi_ap_ie(wpa_s->sme.assoc_req_ie
+						+ wpa_s->sme.assoc_req_ie_len,
+					sizeof(wpa_s->sme.assoc_req_ie)
+						- wpa_s->sme.assoc_req_ie_len,
+					MULTI_AP_BACKHAUL_STA);
+		if (multi_ap_ie_len == 0) {
+			wpa_printf(MSG_ERROR, "Multi-AP: Failed to build Multi-AP IE");
+			return;
+		}
+		wpa_s->sme.assoc_req_ie_len += multi_ap_ie_len;
+	}
+#endif /* CONFIG_MULTI_AP */
 
 	params.bssid = bssid;
 	params.ssid = wpa_s->sme.ssid;

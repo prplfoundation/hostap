@@ -30,6 +30,15 @@ static inline void wpa_drv_deinit(struct wpa_supplicant *wpa_s)
 		wpa_s->driver->deinit(wpa_s->drv_priv);
 }
 
+#ifdef CONFIG_MULTI_AP
+static inline int wpa_drv_set_4addr(struct wpa_supplicant *wpa_s, int val)
+{
+	if (wpa_s->driver->set_4addr)
+		return wpa_s->driver->set_4addr(wpa_s->drv_priv, val);
+	return -1;
+}
+#endif /* CONFIG_MULTI_AP */
+
 static inline int wpa_drv_set_param(struct wpa_supplicant *wpa_s,
 				    const char *param)
 {

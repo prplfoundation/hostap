@@ -2266,6 +2266,37 @@ static void interworking_process_assoc_resp(struct wpa_supplicant *wpa_s,
 
 #endif /* CONFIG_INTERWORKING */
 
+#ifdef CONFIG_MULTI_AP
+static int wpa_validate_multi_ap_ie(struct wpa_supplicant *wpa_s,
+			       const u8 *ies, size_t ies_len)
+{
+	struct ieee802_11_elems elems;
+	const u8 *multi_ap_subelem;
+
+	if (ies == NULL)
+		return -1;
+
+	if (ieee802_11_parse_elems(ies, ies_len, &elems, 1) == ParseFailed)
+		return -1;
+
+	if (!elems.multi_ap) {
+		wpa_printf(MSG_INFO, " AP doesn't support Multi-AP");
+		return -1;
+	}
+	multi_ap_subelem = get_ie(elems.multi_ap + 4, elems.multi_ap_len - 4,
+				  MULTI_AP_SUB_ELEM_TYPE);
+	if (!multi_ap_subelem ||
+	    multi_ap_subelem[1] != 1)
+		return -1;
+
+	if (multi_ap_subelem[2] & MULTI_AP_BACKHAUL_BSS)
+		return 0;
+	else {
+		wpa_printf(MSG_INFO, " AP supports Multi-AP but is not backhaul AP");
+		return -1;
+	}
+}
+#endif /* CONFIG_MULTI_AP */
 
 #ifdef CONFIG_FST
 static int wpas_fst_update_mbie(struct wpa_supplicant *wpa_s,
@@ -2409,6 +2440,23 @@ static int wpa_supplicant_event_associnfo(struct wpa_supplicant *wpa_s,
 		return -1;
 	}
 #endif /* CONFIG_OWE */
+
+#ifdef CONFIG_MULTI_AP
+	if (wpa_s->current_ssid->multi_ap) {
+		if (wpa_validate_multi_ap_ie(wpa_s, data->assoc_info.resp_ies,
+					     data->assoc_info.resp_ies_len)) {
+			wpa_supplicant_deauthenticate(wpa_s,
+						      WLAN_REASON_INVALID_IE);
+			return -1;
+		}
+	}
+	if (wpa_drv_set_4addr(wpa_s, wpa_s->current_ssid->multi_ap)) {
+		wpa_printf(MSG_ERROR, "failed to set 4-address mode\n");
+		wpa_supplicant_deauthenticate(wpa_s,
+					      WLAN_REASON_DEAUTH_LEAVING);
+		return -1;
+	}
+#endif /* CONFIG_MULTI_AP */
 
 #ifdef CONFIG_IEEE80211R
 #ifdef CONFIG_SME
