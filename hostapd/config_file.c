@@ -4111,6 +4111,19 @@ static int hostapd_config_fill(struct hostapd_config *conf,
 	} else if (os_strcmp(buf, "coloc_intf_reporting") == 0) {
 		bss->coloc_intf_reporting = atoi(pos);
 #endif /* CONFIG_OWE */
+#ifdef CONFIG_MULTI_AP
+	} else if (os_strcmp(buf, "multi_ap") == 0) {
+		int val = atoi(pos);
+
+		if (val > 3 || val < 0) {
+			wpa_printf(MSG_ERROR,
+				   "Line %d: Invalid multi_ap '%s'",
+				   line, buf);
+			return -1;
+		}
+
+		bss->multi_ap = val;
+#endif /*CONFIG_MULTI_AP */
 	} else {
 		wpa_printf(MSG_ERROR,
 			   "Line %d: unknown configuration item '%s'",
