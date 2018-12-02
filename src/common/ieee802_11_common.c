@@ -126,6 +126,10 @@ static int ieee802_11_parse_vendor_specific(const u8 *pos, size_t elen,
 			elems->roaming_cons_sel = pos;
 			elems->roaming_cons_sel_len = elen;
 			break;
+		case MULTI_AP_OUI_TYPE:
+			elems->multi_ap = pos;
+			elems->multi_ap_len = elen;
+			break;
 		default:
 			wpa_printf(MSG_MSGDUMP, "Unknown WFA "
 				   "information element ignored "

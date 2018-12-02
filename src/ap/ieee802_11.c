@@ -62,6 +62,30 @@ prepare_auth_resp_fils(struct hostapd_data *hapd,
 		       int *is_pub);
 #endif /* CONFIG_FILS */
 
+u8 * hostapd_eid_multi_ap(struct hostapd_data *hapd, u8 *eid)
+{
+#ifdef CONFIG_MULTI_AP
+	u8 sub_elem_val = 0;
+
+	*eid++ = WLAN_EID_VENDOR_SPECIFIC;
+	*eid++ = 7; /* len */
+	WPA_PUT_BE24(eid, OUI_WFA);
+	eid += 3;
+	*eid++ = MULTI_AP_OUI_TYPE;
+	*eid++ = MULTI_AP_SUB_ELEM_TYPE;
+	*eid++ = 1; /* sub elem len */
+
+	if (hapd->conf->multi_ap & BACKHAUL_BSS)
+		sub_elem_val |= MULTI_AP_BACKHAUL_BSS;
+	if (hapd->conf->multi_ap & FRONTHAUL_BSS)
+		sub_elem_val |= MULTI_AP_FRONTHAUL_BSS;
+	*eid++ = sub_elem_val;
+
+#endif /* CONFIG_MULTI_AP */
+
+	return eid;
+}
+
 u8 * hostapd_eid_supp_rates(struct hostapd_data *hapd, u8 *eid)
 {
 	u8 *pos = eid;
@@ -2210,6 +2234,34 @@ static u16 check_wmm(struct hostapd_data *hapd, struct sta_info *sta,
 	return WLAN_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_MULTI_AP
+static u16 hostapd_validate_multi_ap_ie(struct hostapd_data *hapd,
+					struct sta_info *sta,
+					struct ieee802_11_elems *elems)
+{
+	const u8 *pos, *map_sub_elem;
+	size_t len;
+
+	if (!hapd->conf->multi_ap || !elems->multi_ap)
+		return WLAN_STATUS_SUCCESS;
+
+	pos = elems->multi_ap + 4;/* OUI[3] and OUT_TYPE 1 */
+	len = elems->multi_ap_len - 4;
+
+	sta->flags &= ~WLAN_STA_MULTI_AP;
+
+	map_sub_elem = get_ie(pos, len, MULTI_AP_SUB_ELEM_TYPE);
+
+	if (map_sub_elem) {
+		if (map_sub_elem[1] < 1)
+			return WLAN_STATUS_UNSPECIFIED_FAILURE;
+		if (map_sub_elem[2] & MULTI_AP_BACKHAUL_STA)
+			sta->flags |= WLAN_STA_MULTI_AP;
+	}
+
+	return WLAN_STATUS_SUCCESS;
+}
+#endif /* CONFIG_MULTI_AP */
 
 static u16 copy_supp_rates(struct hostapd_data *hapd, struct sta_info *sta,
 			   struct ieee802_11_elems *elems)
@@ -2466,6 +2518,13 @@ static u16 check_assoc_ies(struct hostapd_data *hapd, struct sta_info *sta,
 	resp = copy_supp_rates(hapd, sta, &elems);
 	if (resp != WLAN_STATUS_SUCCESS)
 		return resp;
+
+#ifdef CONFIG_MULTI_AP
+	resp = hostapd_validate_multi_ap_ie(hapd, sta, &elems);
+	if (resp != WLAN_STATUS_SUCCESS)
+		return resp;
+#endif /* CONFIG_MULTI_AP */
+
 #ifdef CONFIG_IEEE80211N
 	resp = copy_sta_ht_capab(hapd, sta, elems.ht_capabilities);
 	if (resp != WLAN_STATUS_SUCCESS)
@@ -2994,6 +3053,9 @@ static u16 send_assoc_resp(struct hostapd_data *hapd, struct sta_info *sta,
 		}
 	}
 #endif /* CONFIG_WPS */
+
+	if (sta && (sta->flags & WLAN_STA_MULTI_AP))
+		p = hostapd_eid_multi_ap(hapd, p);
 
 #ifdef CONFIG_P2P
 	if (sta && sta->p2p_ie && hapd->p2p_group) {
@@ -4227,7 +4289,7 @@ static void handle_assoc_cb(struct hostapd_data *hapd,
 		sta->flags |= WLAN_STA_WDS;
 	}
 
-	if (sta->flags & WLAN_STA_WDS) {
+	if (sta->flags & (WLAN_STA_WDS | WLAN_STA_MULTI_AP)) {
 		int ret;
 		char ifname_wds[IFNAMSIZ + 1];
 
