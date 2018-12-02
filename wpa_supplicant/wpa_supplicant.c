@@ -285,6 +285,23 @@ void wpa_supplicant_cancel_auth_timeout(struct wpa_supplicant *wpa_s)
 	wpa_s->last_con_fail_realm_len = 0;
 }
 
+#ifdef CONFIG_MULTI_AP
+void wpa_add_multi_ap_info_ie(u8 *pos, size_t *len)
+{
+	u8 *buf = pos;
+
+	*buf++ = WLAN_EID_VENDOR_SPECIFIC;
+	*buf++ = 7; /* len */
+	WPA_PUT_BE24(buf, OUI_WFA);
+	buf += 3;
+	*buf++ = MULTI_AP_OUI_TYPE;
+	*buf++ = MULTI_AP_SUB_ELEM_TYPE;
+	*buf++ = 1; /*sub element len */
+	*buf++ = MULTI_AP_BACKHAUL_STA;
+
+	*len += (buf - pos);
+}
+#endif /* CONFIG_MULTI_AP */
 
 /**
  * wpa_supplicant_initiate_eapol - Configure EAPOL state machine
@@ -2808,6 +2825,11 @@ static u8 * wpas_populate_assoc_ies(
 	}
 #endif /* CONFIG_IEEE80211R */
 
+#ifdef CONFIG_MULTI_AP
+	if (ssid->multiap_backhaul_sta && ((max_wpa_ie_len - wpa_ie_len) > 9))
+		wpa_add_multi_ap_info_ie(wpa_ie, &wpa_ie_len);
+#endif /* CONFIG_MULTI_AP */
+
 	params->wpa_ie = wpa_ie;
 	params->wpa_ie_len = wpa_ie_len;
 	params->auth_alg = algs;
@@ -3285,6 +3307,13 @@ void wpa_supplicant_deauthenticate(struct wpa_supplicant *wpa_s,
 		addr = wpa_s->bssid;
 		zero_addr = 1;
 	}
+
+#ifdef CONFIG_MULTI_AP
+	if (wpa_s->enabled_4addr_mode) {
+		if (wpa_drv_set_4addr_mode(wpa_s, 0))
+			wpa_s->enabled_4addr_mode = 0;
+	}
+#endif
 
 #ifdef CONFIG_TDLS
 	wpa_tdls_teardown_peers(wpa_s->wpa);

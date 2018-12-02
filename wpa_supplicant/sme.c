@@ -39,7 +39,6 @@ static void sme_obss_scan_timeout(void *eloop_ctx, void *timeout_ctx);
 static void sme_stop_sa_query(struct wpa_supplicant *wpa_s);
 #endif /* CONFIG_IEEE80211W */
 
-
 #ifdef CONFIG_SAE
 
 static int index_within_array(const int *array, int idx)
@@ -1547,6 +1546,19 @@ void sme_associate(struct wpa_supplicant *wpa_s, enum wpas_mode mode,
 		wpabuf_free(owe_ie);
 	}
 #endif /* CONFIG_OWE */
+
+#ifdef CONFIG_MULTI_AP
+	if (wpa_s->conf->ssid->multiap_backhaul_sta) {
+		if (wpa_s->sme.assoc_req_ie_len + 9 >
+		    sizeof(wpa_s->sme.assoc_req_ie)) {
+			wpa_printf(MSG_ERROR,
+					"Multi-AP: Not enough buffer for Assoc req frame element");
+			return;
+		}
+		u8 *pos = wpa_s->sme.assoc_req_ie + wpa_s->sme.assoc_req_ie_len;
+		wpa_add_multi_ap_info_ie(pos, &wpa_s->sme.assoc_req_ie_len);
+	}
+#endif /* CONFIG_MULTI_AP */
 
 	params.bssid = bssid;
 	params.ssid = wpa_s->sme.ssid;

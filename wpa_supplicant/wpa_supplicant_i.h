@@ -1234,6 +1234,9 @@ struct wpa_supplicant {
 	unsigned int disable_fils:1;
 #endif /* CONFIG_FILS */
 	unsigned int ieee80211ac:1;
+#ifdef CONFIG_MULTI_AP
+	char enabled_4addr_mode;
+#endif
 };
 
 
@@ -1493,4 +1496,7 @@ int wpas_ctrl_iface_get_pref_freq_list_override(struct wpa_supplicant *wpa_s,
 int wpa_is_fils_supported(struct wpa_supplicant *wpa_s);
 int wpa_is_fils_sk_pfs_supported(struct wpa_supplicant *wpa_s);
 
+#ifdef CONFIG_MULTI_AP
+void wpa_add_multi_ap_info_ie(u8 *pos, size_t *len);
+#endif
 #endif /* WPA_SUPPLICANT_I_H */

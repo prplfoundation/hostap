@@ -2266,6 +2266,55 @@ static void interworking_process_assoc_resp(struct wpa_supplicant *wpa_s,
 
 #endif /* CONFIG_INTERWORKING */
 
+#ifdef CONFIG_MULTI_AP
+static void multi_ap_process_assoc_resp(struct wpa_supplicant *wpa_s,
+					const u8 *ies, size_t ies_len)
+{
+	struct ieee802_11_elems elems;
+	const u8 *map_sub_elem, *pos;
+	size_t len;
+
+	if (!wpa_s->current_ssid->multiap_backhaul_sta)
+		return;
+
+	if (ies == NULL)
+		return;
+
+	if (ieee802_11_parse_elems(ies, ies_len, &elems, 1) == ParseFailed)
+		return;
+
+	if (elems.multi_ap && (elems.multi_ap_len >= 7)) {
+		pos = elems.multi_ap + 4;
+		len = elems.multi_ap_len - 4;
+
+		map_sub_elem = get_ie(pos, len, MULTI_AP_SUB_ELEM_TYPE);
+		if (!map_sub_elem || map_sub_elem[1] < 1) {
+			wpa_printf(MSG_INFO, "invalid Multi-AP sub elem type\n");
+			goto fail;
+		}
+
+		if (!(map_sub_elem[2] & MULTI_AP_BACKHAUL_BSS)) {
+			wpa_printf(MSG_INFO, "AP doesn't support BACKHAUL BSS");
+			goto fail;
+		}
+
+		if (wpa_drv_set_4addr_mode(wpa_s, 1)) {
+			wpa_printf(MSG_ERROR, "failed to sed 4addr mode\n");
+			goto fail;
+		}
+		wpa_s->enabled_4addr_mode = 1;
+	} else {
+		wpa_printf(MSG_INFO, "AP doesn't support Multi-AP protocol");
+		goto fail;
+	}
+
+	return;
+
+fail:
+	wpa_supplicant_deauthenticate(wpa_s, WLAN_REASON_DEAUTH_LEAVING);
+	return;
+}
+#endif /* CONFIG_MULTI_AP */
 
 #ifdef CONFIG_FST
 static int wpas_fst_update_mbie(struct wpa_supplicant *wpa_s,
@@ -2343,6 +2392,10 @@ static int wpa_supplicant_event_associnfo(struct wpa_supplicant *wpa_s,
 		    get_ie(data->assoc_info.resp_ies,
 			   data->assoc_info.resp_ies_len, WLAN_EID_VHT_CAP))
 			wpa_s->ieee80211ac = 1;
+#ifdef CONFIG_MULTI_AP
+		multi_ap_process_assoc_resp(wpa_s, data->assoc_info.resp_ies,
+					    data->assoc_info.resp_ies_len);
+#endif /* CONFIG_MULTI_AP */
 	}
 	if (data->assoc_info.beacon_ies)
 		wpa_hexdump(MSG_DEBUG, "beacon_ies",
