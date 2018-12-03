@@ -942,7 +942,7 @@ struct wpa_ssid {
 	 * 0 = normal station
 	 * 1 = backhaul station
 	 */
-	int multiap_backhaul_sta;
+	int multi_ap_backhaul_sta;
 };
 
 #endif /* CONFIG_SSID_H */

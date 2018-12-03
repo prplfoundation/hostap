@@ -2273,7 +2273,7 @@ static void multi_ap_process_assoc_resp(struct wpa_supplicant *wpa_s,
 	const u8 *map_sub_elem, *pos;
 	size_t len;
 
-	if (!wpa_s->current_ssid->multiap_backhaul_sta)
+	if (!wpa_s->current_ssid->multi_ap_backhaul_sta)
 		return;
 
 	if (ies == NULL)

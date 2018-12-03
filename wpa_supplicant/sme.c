@@ -1547,7 +1547,7 @@ void sme_associate(struct wpa_supplicant *wpa_s, enum wpas_mode mode,
 	}
 #endif /* CONFIG_OWE */
 
-	if (wpa_s->conf->ssid->multiap_backhaul_sta) {
+	if (wpa_s->conf->ssid->multi_ap_backhaul_sta) {
 		if (wpa_s->sme.assoc_req_ie_len + 9 >
 		    sizeof(wpa_s->sme.assoc_req_ie)) {
 			wpa_printf(MSG_ERROR,

@@ -2320,7 +2320,7 @@ static const struct parse_data ssid_fields[] = {
 #endif /* CONFIG_DPP */
 	{ INT_RANGE(owe_group, 0, 65535) },
 	{ INT_RANGE(owe_only, 0, 1) },
-	{ INT_RANGE(multiap_backhaul_sta, 0, 1) },
+	{ INT_RANGE(multi_ap_backhaul_sta, 0, 1) },
 };
 
 #undef OFFSET

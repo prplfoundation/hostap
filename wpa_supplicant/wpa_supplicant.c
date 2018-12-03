@@ -2823,7 +2823,7 @@ static u8 * wpas_populate_assoc_ies(
 	}
 #endif /* CONFIG_IEEE80211R */
 
-	if (ssid->multiap_backhaul_sta && ((max_wpa_ie_len - wpa_ie_len) > 9))
+	if (ssid->multi_ap_backhaul_sta && ((max_wpa_ie_len - wpa_ie_len) > 9))
 		wpa_add_multi_ap_info_ie(wpa_ie, &wpa_ie_len);
 
 	params->wpa_ie = wpa_ie;
