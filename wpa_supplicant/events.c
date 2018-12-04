@@ -2266,7 +2266,6 @@ static void interworking_process_assoc_resp(struct wpa_supplicant *wpa_s,
 
 #endif /* CONFIG_INTERWORKING */
 
-#ifdef CONFIG_MULTI_AP
 static void multi_ap_process_assoc_resp(struct wpa_supplicant *wpa_s,
 					const u8 *ies, size_t ies_len)
 {
@@ -2314,7 +2313,6 @@ fail:
 	wpa_supplicant_deauthenticate(wpa_s, WLAN_REASON_DEAUTH_LEAVING);
 	return;
 }
-#endif /* CONFIG_MULTI_AP */
 
 #ifdef CONFIG_FST
 static int wpas_fst_update_mbie(struct wpa_supplicant *wpa_s,
@@ -2392,10 +2390,8 @@ static int wpa_supplicant_event_associnfo(struct wpa_supplicant *wpa_s,
 		    get_ie(data->assoc_info.resp_ies,
 			   data->assoc_info.resp_ies_len, WLAN_EID_VHT_CAP))
 			wpa_s->ieee80211ac = 1;
-#ifdef CONFIG_MULTI_AP
 		multi_ap_process_assoc_resp(wpa_s, data->assoc_info.resp_ies,
 					    data->assoc_info.resp_ies_len);
-#endif /* CONFIG_MULTI_AP */
 	}
 	if (data->assoc_info.beacon_ies)
 		wpa_hexdump(MSG_DEBUG, "beacon_ies",

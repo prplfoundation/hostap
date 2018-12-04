@@ -96,10 +96,6 @@ CONFIG_NO_RANDOM_POOL=
 CONFIG_OPENSSL_CMAC=y
 endif
 
-ifdef CONFIG_MULTI_AP
-CFLAGS += -DCONFIG_MULTI_AP
-endif
-
 OBJS = config.o
 OBJS += notify.o
 OBJS += bss.o

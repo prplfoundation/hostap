@@ -4093,7 +4093,6 @@ struct wpa_driver_ops {
 	int (*send_external_auth_status)(void *priv,
 					 struct external_auth *params);
 
-#ifdef CONFIG_MULTI_AP
 	/**
 	 * set_4addr_mode - Set 4address mode
 	 * @priv: Private driver interface data
@@ -4102,7 +4101,6 @@ struct wpa_driver_ops {
 	 * @brige_ifname - Bridge interface name
 	 */
 	int (*set_4addr_mode)(void *priv, const char *dridge_ifname, int val);
-#endif /* CONFIG_MULTI_AP */
 };
 
 /**

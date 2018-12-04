@@ -593,6 +593,3 @@ CONFIG_BACKEND=file
 # Opportunistic Wireless Encryption (OWE)
 # Experimental implementation of draft-harkins-owe-07.txt
 #CONFIG_OWE=y
-
-#Multi-AP protocol support
-#CONFIG_MULTI_AP=y

@@ -10647,7 +10647,6 @@ fail:
 	return ret;
 }
 
-#ifdef CONFIG_MULTI_AP
 static int nl80211_set_4addr_mode(void *priv, const char *bridge_ifname,
 				  int val)
 {
@@ -10688,7 +10687,6 @@ fail:
 
 	return ret;
 }
-#endif /* CONFIG_MULTI_AP */
 
 const struct wpa_driver_ops wpa_driver_nl80211_ops = {
 	.name = "nl80211",
@@ -10818,7 +10816,5 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
 	.get_ext_capab = nl80211_get_ext_capab,
 	.update_connect_params = nl80211_update_connection_params,
 	.send_external_auth_status = nl80211_send_external_auth_status,
-#ifdef CONFIG_MULTI_AP
 	.set_4addr_mode = nl80211_set_4addr_mode,
-#endif /* CONFIG_MULTI_AP */
 };

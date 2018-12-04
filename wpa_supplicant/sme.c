@@ -1547,7 +1547,6 @@ void sme_associate(struct wpa_supplicant *wpa_s, enum wpas_mode mode,
 	}
 #endif /* CONFIG_OWE */
 
-#ifdef CONFIG_MULTI_AP
 	if (wpa_s->conf->ssid->multiap_backhaul_sta) {
 		if (wpa_s->sme.assoc_req_ie_len + 9 >
 		    sizeof(wpa_s->sme.assoc_req_ie)) {
@@ -1558,7 +1557,6 @@ void sme_associate(struct wpa_supplicant *wpa_s, enum wpas_mode mode,
 		u8 *pos = wpa_s->sme.assoc_req_ie + wpa_s->sme.assoc_req_ie_len;
 		wpa_add_multi_ap_info_ie(pos, &wpa_s->sme.assoc_req_ie_len);
 	}
-#endif /* CONFIG_MULTI_AP */
 
 	params.bssid = bssid;
 	params.ssid = wpa_s->sme.ssid;
