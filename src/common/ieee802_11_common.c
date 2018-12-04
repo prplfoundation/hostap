@@ -1523,6 +1523,26 @@ size_t mbo_add_ie(u8 *buf, size_t len, const u8 *attr, size_t attr_len)
 }
 
 
+size_t add_multi_ap_ie(u8 *buf, size_t len, u8 value)
+{
+	u8 *pos = buf;
+
+	if (len < 9)
+		return 0;
+
+	*pos++ = WLAN_EID_VENDOR_SPECIFIC;
+	*pos++ = 7; /* len */
+	WPA_PUT_BE24(pos, OUI_WFA);
+	pos += 3;
+	*pos++ = MULTI_AP_OUI_TYPE;
+	*pos++ = MULTI_AP_SUB_ELEM_TYPE;
+	*pos++ = 1; /* len */
+	*pos++ = value;
+
+	return pos - buf;
+}
+
+
 static const struct country_op_class us_op_class[] = {
 	{ 1, 115 },
 	{ 2, 118 },

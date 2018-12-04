@@ -64,24 +64,16 @@ prepare_auth_resp_fils(struct hostapd_data *hapd,
 
 u8 * hostapd_eid_multi_ap(struct hostapd_data *hapd, u8 *eid)
 {
-	u8 sub_elem_val = 0;
+	u8 multi_ap_val = 0;
 
-	*eid++ = WLAN_EID_VENDOR_SPECIFIC;
-	*eid++ = 7; /* len */
-	WPA_PUT_BE24(eid, OUI_WFA);
-	eid += 3;
-	*eid++ = MULTI_AP_OUI_TYPE;
-	*eid++ = MULTI_AP_SUB_ELEM_TYPE;
-	*eid++ = 1; /* sub elem len */
-
+	if (!hapd->conf->multi_ap)
+		return eid;
 	if (hapd->conf->multi_ap & BACKHAUL_BSS)
-		sub_elem_val |= MULTI_AP_BACKHAUL_BSS;
+		multi_ap_val |= MULTI_AP_BACKHAUL_BSS;
 	if (hapd->conf->multi_ap & FRONTHAUL_BSS)
-		sub_elem_val |= MULTI_AP_FRONTHAUL_BSS;
-	*eid++ = sub_elem_val;
+		multi_ap_val |= MULTI_AP_FRONTHAUL_BSS;
 
-
-	return eid;
+	return eid + add_multi_ap_ie(eid, 9, multi_ap_val);
 }
 
 u8 * hostapd_eid_supp_rates(struct hostapd_data *hapd, u8 *eid)

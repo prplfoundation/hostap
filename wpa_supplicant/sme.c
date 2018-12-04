@@ -1548,14 +1548,15 @@ void sme_associate(struct wpa_supplicant *wpa_s, enum wpas_mode mode,
 #endif /* CONFIG_OWE */
 
 	if (wpa_s->conf->ssid->multi_ap_backhaul_sta) {
-		if (wpa_s->sme.assoc_req_ie_len + 9 >
-		    sizeof(wpa_s->sme.assoc_req_ie)) {
-			wpa_printf(MSG_ERROR,
-					"Multi-AP: Not enough buffer for Assoc req frame element");
+		size_t multi_ap_ie_len = add_multi_ap_ie(
+			wpa_s->sme.assoc_req_ie + wpa_s->sme.assoc_req_ie_len,
+			sizeof(wpa_s->sme.assoc_req_ie) - wpa_s->sme.assoc_req_ie_len,
+			MULTI_AP_BACKHAUL_STA);
+		if (multi_ap_ie_len == 0) {
+			wpa_printf(MSG_ERROR, "Multi-AP: Failed to build Multi-AP IE");
 			return;
 		}
-		u8 *pos = wpa_s->sme.assoc_req_ie + wpa_s->sme.assoc_req_ie_len;
-		wpa_add_multi_ap_info_ie(pos, &wpa_s->sme.assoc_req_ie_len);
+		wpa_s->sme.assoc_req_ie_len += multi_ap_ie_len;
 	}
 
 	params.bssid = bssid;

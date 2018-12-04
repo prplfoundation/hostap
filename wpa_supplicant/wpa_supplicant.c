@@ -285,21 +285,6 @@ void wpa_supplicant_cancel_auth_timeout(struct wpa_supplicant *wpa_s)
 	wpa_s->last_con_fail_realm_len = 0;
 }
 
-void wpa_add_multi_ap_info_ie(u8 *pos, size_t *len)
-{
-	u8 *buf = pos;
-
-	*buf++ = WLAN_EID_VENDOR_SPECIFIC;
-	*buf++ = 7; /* len */
-	WPA_PUT_BE24(buf, OUI_WFA);
-	buf += 3;
-	*buf++ = MULTI_AP_OUI_TYPE;
-	*buf++ = MULTI_AP_SUB_ELEM_TYPE;
-	*buf++ = 1; /*sub element len */
-	*buf++ = MULTI_AP_BACKHAUL_STA;
-
-	*len += (buf - pos);
-}
 
 /**
  * wpa_supplicant_initiate_eapol - Configure EAPOL state machine
@@ -2823,8 +2808,16 @@ static u8 * wpas_populate_assoc_ies(
 	}
 #endif /* CONFIG_IEEE80211R */
 
-	if (ssid->multi_ap_backhaul_sta && ((max_wpa_ie_len - wpa_ie_len) > 9))
-		wpa_add_multi_ap_info_ie(wpa_ie, &wpa_ie_len);
+	if (ssid->multi_ap_backhaul_sta) {
+		size_t multi_ap_ie_len = add_multi_ap_ie(wpa_ie + wpa_ie_len,
+			 max_wpa_ie_len - wpa_ie_len, MULTI_AP_BACKHAUL_STA);
+		if (multi_ap_ie_len == 0) {
+			wpa_printf(MSG_ERROR, "Multi-AP: Failed to build Multi-AP IE");
+			os_free(wpa_ie);
+			return NULL;
+		}
+		wpa_ie_len += multi_ap_ie_len;
+	}
 
 	params->wpa_ie = wpa_ie;
 	params->wpa_ie_len = wpa_ie_len;
