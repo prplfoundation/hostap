@@ -687,9 +687,7 @@ struct hostapd_bss_config {
 
 	int coloc_intf_reporting;
 
-#ifdef CONFIG_MULTI_AP
 	int multi_ap;
-#endif /*CONFIG_MULTI_AP */
 };
 
 /**

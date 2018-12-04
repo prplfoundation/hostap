@@ -61,10 +61,6 @@ CFLAGS += -DCONFIG_NATIVE_WINDOWS
 LIBS += -lws2_32
 endif
 
-ifdef CONFIG_MULTI_AP
-CFLAGS += -DCONFIG_MULTI_AP
-endif
-
 OBJS += main.o
 OBJS += config_file.o
 

@@ -64,7 +64,6 @@ prepare_auth_resp_fils(struct hostapd_data *hapd,
 
 u8 * hostapd_eid_multi_ap(struct hostapd_data *hapd, u8 *eid)
 {
-#ifdef CONFIG_MULTI_AP
 	u8 sub_elem_val = 0;
 
 	*eid++ = WLAN_EID_VENDOR_SPECIFIC;
@@ -81,7 +80,6 @@ u8 * hostapd_eid_multi_ap(struct hostapd_data *hapd, u8 *eid)
 		sub_elem_val |= MULTI_AP_FRONTHAUL_BSS;
 	*eid++ = sub_elem_val;
 
-#endif /* CONFIG_MULTI_AP */
 
 	return eid;
 }
@@ -2234,7 +2232,6 @@ static u16 check_wmm(struct hostapd_data *hapd, struct sta_info *sta,
 	return WLAN_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_MULTI_AP
 static u16 hostapd_validate_multi_ap_ie(struct hostapd_data *hapd,
 					struct sta_info *sta,
 					struct ieee802_11_elems *elems)
@@ -2261,7 +2258,6 @@ static u16 hostapd_validate_multi_ap_ie(struct hostapd_data *hapd,
 
 	return WLAN_STATUS_SUCCESS;
 }
-#endif /* CONFIG_MULTI_AP */
 
 static u16 copy_supp_rates(struct hostapd_data *hapd, struct sta_info *sta,
 			   struct ieee802_11_elems *elems)
@@ -2519,11 +2515,9 @@ static u16 check_assoc_ies(struct hostapd_data *hapd, struct sta_info *sta,
 	if (resp != WLAN_STATUS_SUCCESS)
 		return resp;
 
-#ifdef CONFIG_MULTI_AP
 	resp = hostapd_validate_multi_ap_ie(hapd, sta, &elems);
 	if (resp != WLAN_STATUS_SUCCESS)
 		return resp;
-#endif /* CONFIG_MULTI_AP */
 
 #ifdef CONFIG_IEEE80211N
 	resp = copy_sta_ht_capab(hapd, sta, elems.ht_capabilities);
