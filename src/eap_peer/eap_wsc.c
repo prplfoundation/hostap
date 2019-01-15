@@ -274,6 +274,9 @@ static void * eap_wsc_init(struct eap_sm *sm)
 				      cfg.pin, cfg.pin_len, 0);
 	}
 
+	if (os_strstr(phase1, "multi_ap=1"))
+		wps->multi_ap_backhaul_sta = 1;
+
 	/* Use reduced client timeout for WPS to avoid long wait */
 	if (sm->ClientTimeout > 30)
 		sm->ClientTimeout = 30;

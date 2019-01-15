@@ -613,6 +613,12 @@ struct wps_context {
 	int ap_setup_locked;
 
 	/**
+	 * multi_ap_backhaul_sta - Whether this is a Multi-AP backhaul STA
+	 * enrollee
+	 */
+	int multi_ap_backhaul_sta;
+
+	/**
 	 * uuid - Own UUID
 	 */
 	u8 uuid[16];
