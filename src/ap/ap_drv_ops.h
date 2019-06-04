@@ -379,4 +379,20 @@ hostapd_drv_send_external_auth_status(struct hostapd_data *hapd,
 	return hapd->driver->send_external_auth_status(hapd->drv_priv, params);
 }
 
+static inline int
+hostapd_drv_get_antennas(struct hostapd_data *hapd, u32 *tx, u32 *rx)
+{
+	if (!hapd->driver || !hapd->driver->get_antennas || !hapd->drv_priv)
+		return 0;
+	return hapd->driver->get_antennas(hapd->drv_priv, tx, rx);
+}
+
+static inline int
+hostapd_drv_get_tx_power(struct hostapd_data *hapd, u32 *tx_power)
+{
+	if (!hapd->driver || !hapd->driver->get_tx_power || !hapd->drv_priv)
+		return 0;
+	return hapd->driver->get_tx_power(hapd->drv_priv, tx_power);
+}
+
 #endif /* AP_DRV_OPS */

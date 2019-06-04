@@ -4220,6 +4220,24 @@ struct wpa_driver_ops {
 	 * Returns: 0 on success, < 0 on failure
 	 */
 	int (*set_4addr_mode)(void *priv, const char *bridge_ifname, int val);
+
+
+	/**
+	 * get_antennas - Get the current Antenna mask
+	 * @priv: Private driver interface data
+	 * @tx: pointer to memory that the tx mask gets stored in
+	 * @rx: pointer to memory that the rx mask gets stored in
+	 * Returns: 0 on success, < 0 on failure
+	 */
+	int (*get_antennas)(void *priv, u32 *tx, u32 *rx);
+
+	/**
+	 * get_tx_power - Get the current tx power
+	 * @priv: Private driver interface data
+	 * @tx_power: pointer to memory that the tx power gets stored in
+	 * Returns: 0 on success, < 0 on failure
+	 */
+	int (*get_tx_power)(void *priv, u32 *tx_power);
 };
 
 /**
