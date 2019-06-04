@@ -818,20 +818,96 @@ static void hostapd_notify_bad_chans(struct hostapd_iface *iface)
 }
 
 
+struct hostapd_channel_data* hostapd_hw_get_channel_data(struct hostapd_iface *iface, int freq)
+{
+	int i;
+	struct hostapd_channel_data *ch;
+
+	if (!iface->current_mode)
+		return NULL;
+
+	for (i = 0; i < iface->current_mode->num_channels; i++) {
+		ch = &iface->current_mode->channels[i];
+		if (ch->freq == freq)
+			return ch;
+	}
+
+	return NULL;
+}
+
+
+int get_num_width(int vht_width, int secondary)
+{
+	switch (vht_width) {
+	case CHANWIDTH_USE_HT:   return secondary ? 40 : 20;
+	case CHANWIDTH_80MHZ:    return 80;
+	case CHANWIDTH_160MHZ:   return 160;
+	case CHANWIDTH_80P80MHZ:
+	default: wpa_printf(MSG_ERROR, "ACS: wrong or unsupported channel VHT width %d", vht_width);
+	}
+
+	return -1;
+}
+
+
+int acs_chan_to_freq(int channel)
+{
+	int res = 0;
+
+	/* IEEE Std 802.11-2012: 20.3.15 Channel numbering and channelization
+	   Channel center frequency = starting frequency + 5 * ch
+	 */
+
+#define CHANNEL_THRESHOLD 180
+
+	/* channels 1..14 */
+	if (channel >= 1 && channel <= 14) {
+		res = 2407 + 5 * channel;
+		if (channel == 14) /* IEEE Std 802.11-2012: 17.4.6.3 Channel Numbering of operating channels */
+			res += 7;
+		}
+	else if (channel >= 36 && channel <= CHANNEL_THRESHOLD)
+		res = 5000 + 5 * channel;
+	else if (channel)
+		res = 4000 + 5 * channel;
+
+#undef CHANNEL_THRESHOLD
+	return res;
+}
+
+
 int hostapd_acs_completed(struct hostapd_iface *iface, int err)
 {
 	int ret = -1;
+	int dfs_channel = 0;
+	struct hostapd_channel_data* chan;
+	int freq;
 
 	if (err)
 		goto out;
 
 	switch (hostapd_check_chans(iface)) {
 	case HOSTAPD_CHAN_VALID:
-		wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO,
-			ACS_EVENT_COMPLETED "freq=%d channel=%d",
-			hostapd_hw_get_freq(iface->bss[0],
-					    iface->conf->channel),
-			iface->conf->channel);
+		freq = hostapd_hw_get_freq(iface->bss[0], iface->conf->channel);
+		chan = hostapd_hw_get_channel_data(iface, freq);
+		if (chan && (chan->flag & HOSTAPD_CHAN_RADAR))
+			dfs_channel = 1;
+
+		if (!iface->conf->acs_scan_mode) {
+			wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO,
+				ACS_EVENT_COMPLETED "freq=%d channel=%d"
+				" OperatingChannelBandwidt=%d ExtensionChannel=%d cf1=%d cf2=%d"
+				" dfs_chan=%d",
+				freq, iface->conf->channel,
+				get_num_width(iface->conf->vht_oper_chwidth, iface->conf->secondary_channel),
+				iface->conf->secondary_channel,
+				acs_chan_to_freq(iface->conf->vht_oper_centr_freq_seg0_idx),
+				acs_chan_to_freq(iface->conf->vht_oper_centr_freq_seg1_idx),
+				dfs_channel);
+		} else {
+			hostapd_set_state(iface, HAPD_IFACE_ACS_DONE);
+			wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, ACS_EVENT_COMPLETED "SCAN");
+		}
 		break;
 	case HOSTAPD_CHAN_ACS:
 		wpa_printf(MSG_ERROR, "ACS error - reported complete, but no result available");
@@ -844,6 +920,12 @@ int hostapd_acs_completed(struct hostapd_iface *iface, int err)
 		wpa_msg(iface->bss[0]->msg_ctx, MSG_INFO, ACS_EVENT_FAILED);
 		hostapd_notify_bad_chans(iface);
 		goto out;
+	}
+
+	/* After scan and ACS don't set the channel */
+	if (iface->conf->acs_scan_mode) {
+		iface->conf->acs_scan_mode = 0;
+		return 0;
 	}
 
 	ret = hostapd_check_ht_capab(iface);

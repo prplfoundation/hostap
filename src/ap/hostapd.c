@@ -3061,6 +3061,8 @@ const char * hostapd_state_text(enum hostapd_iface_state s)
 		return "COUNTRY_UPDATE";
 	case HAPD_IFACE_ACS:
 		return "ACS";
+	case HAPD_IFACE_ACS_DONE:
+		return "ACS_DONE";
 	case HAPD_IFACE_HT_SCAN:
 		return "HT_SCAN";
 	case HAPD_IFACE_DFS:

@@ -3225,6 +3225,8 @@ static int hostapd_config_fill(struct hostapd_config *conf,
 				   line);
 			return -1;
 		}
+	} else if (os_strcmp(buf, "acs_scan_mode") == 0) {
+		conf->acs_scan_mode = atoi(pos);
 #endif /* CONFIG_ACS */
 	} else if (os_strcmp(buf, "dtim_period") == 0) {
 		int val = atoi(pos);

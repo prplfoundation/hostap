@@ -876,6 +876,7 @@ struct hostapd_config {
 		double bias;
 	} *acs_chan_bias;
 	unsigned int num_acs_chan_bias;
+	int acs_scan_mode;
 #endif /* CONFIG_ACS */
 
 	struct wpabuf *lci;
