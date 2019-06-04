@@ -10972,6 +10972,72 @@ fail:
 	return ret;
 }
 
+static int wiphy_info_handler(struct nl_msg *msg, void *arg)
+{
+	struct nlattr *tb[NL80211_ATTR_MAX + 1];
+	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+	u32 *antennas = arg;
+
+	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
+		  genlmsg_attrlen(gnlh, 0), NULL);
+
+	if (tb[NL80211_ATTR_WIPHY_ANTENNA_TX])
+		antennas[0] = nla_get_u32(tb[NL80211_ATTR_WIPHY_ANTENNA_TX]);
+	if (tb[NL80211_ATTR_WIPHY_ANTENNA_RX])
+		antennas[1] = nla_get_u32(tb[NL80211_ATTR_WIPHY_ANTENNA_RX]);
+
+	return NL_SKIP;
+}
+
+
+static int nl80211_get_antennas(void *priv, u32 *tx, u32 *rx)
+{
+	struct i802_bss *bss = priv;
+	struct nl_msg *msg;
+	u32 antennas[2];
+
+        if (!(msg = nl80211_cmd_msg(bss, 0, NL80211_CMD_GET_WIPHY)))
+                return -1;
+
+	if (!send_and_recv_msgs(bss->drv, msg, wiphy_info_handler, &antennas) == 0)
+		return -1;
+
+	*tx = antennas[0];
+	*rx = antennas[1];
+
+	return 0;
+}
+
+
+static int tx_power_handler(struct nl_msg *msg, void *arg)
+{
+	struct nlattr *tb[NL80211_ATTR_MAX + 1];
+	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+	u32 *tx_power = arg;
+
+	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
+		  genlmsg_attrlen(gnlh, 0), NULL);
+
+	if (tb[NL80211_ATTR_WIPHY_TX_POWER_LEVEL])
+		*tx_power = nla_get_u32(tb[NL80211_ATTR_WIPHY_TX_POWER_LEVEL]);
+	else
+		*tx_power = 0;
+
+	return NL_SKIP;
+}
+
+
+static int nl80211_get_tx_power(void *priv, u32 *tx_power)
+{
+	struct i802_bss *bss = priv;
+	struct nl_msg *msg;
+
+        if (!(msg = nl80211_cmd_msg(bss, 0, NL80211_CMD_GET_INTERFACE)))
+                return -1;
+
+	return send_and_recv_msgs(bss->drv, msg, tx_power_handler, tx_power);
+}
+
 
 const struct wpa_driver_ops wpa_driver_nl80211_ops = {
 	.name = "nl80211",
@@ -11105,4 +11171,6 @@ const struct wpa_driver_ops wpa_driver_nl80211_ops = {
 	.update_connect_params = nl80211_update_connection_params,
 	.send_external_auth_status = nl80211_send_external_auth_status,
 	.set_4addr_mode = nl80211_set_4addr_mode,
+	.get_antennas = nl80211_get_antennas,
+	.get_tx_power = nl80211_get_tx_power,
 };
