@@ -1507,6 +1507,25 @@ static int hostapd_cli_cmd_reload_wpa_psk(struct wpa_ctrl *ctrl, int argc,
 	return wpa_ctrl_command(ctrl, "RELOAD_WPA_PSK");
 }
 
+static int hostapd_cli_cmd_radio_info(struct wpa_ctrl *ctrl, int argc,
+				      char *argv[])
+{
+	char cmd[256];
+	int res;
+
+	if (argc != 0) {
+		printf("radio_info doesn't require parameters\n");
+		return -1;
+	}
+
+	res = os_snprintf(cmd, sizeof(cmd), "GET_RADIO_INFO");
+	if (res < 0 || (size_t) res >= sizeof(cmd) - 1) {
+		printf("Too long GET_RADIO_INFO command.\n");
+		return -1;
+	}
+
+	return wpa_ctrl_command(ctrl, cmd);
+}
 
 struct hostapd_cli_cmd {
 	const char *cmd;
@@ -1687,6 +1706,8 @@ static const struct hostapd_cli_cmd hostapd_cli_commands[] = {
 	  "<addr> [req_mode=] <measurement request hexdump>  = send a Beacon report request to a station" },
 	{ "reload_wpa_psk", hostapd_cli_cmd_reload_wpa_psk, NULL,
 	  "= reload wpa_psk_file only" },
+	{ "radio_info", hostapd_cli_cmd_radio_info, NULL,
+	  "get radio info" },
 	{ NULL, NULL, NULL, NULL }
 };
 

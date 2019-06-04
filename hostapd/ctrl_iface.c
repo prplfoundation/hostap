@@ -2910,6 +2910,74 @@ static int hostapd_ctrl_iface_get_capability(struct hostapd_data *hapd,
 	return -1;
 }
 
+int hostapd_ctrl_iface_get_radio_state (enum hostapd_iface_state state)
+{
+	switch (state) {
+	case HAPD_IFACE_ENABLED:
+		return 1;
+	case HAPD_IFACE_ACS_DONE:
+		return 2;
+	default:
+		return 0;
+	}
+}
+
+int hostapd_ctrl_iface_get_radio_info(struct hostapd_data *hapd,
+				      const char *cmd, char *buf, size_t buflen)
+{
+	int ret = 0, len = 0;
+	enum hostapd_iface_state state = hapd->iface->state;
+	u32 tx_antenna, rx_antenna, tx_power;
+
+	ret = os_snprintf(buf + len, buflen - len, "Name=%s\n",
+		hapd->conf->iface);
+	if (ret >= buflen - len || ret < 0)
+		return len;
+	len += ret;
+
+	ret = os_snprintf(buf + len, buflen - len, "TxEnabled=%d\n",
+		hostapd_ctrl_iface_get_radio_state(state));
+	if (ret >= buflen - len || ret < 0)
+		return len;
+	len += ret;
+
+	ret = os_snprintf(buf + len, buflen - len, "Channel=%d\n",
+		hapd->iface->conf->channel);
+	if (ret >= buflen - len || ret < 0)
+		return len;
+	len += ret;
+
+	hostapd_drv_get_tx_power(hapd, &tx_power);
+	ret = os_snprintf(buf + len, buflen - len, "TxPower=%.2f\n", tx_power / 100.0f);
+	if (ret >= buflen - len || ret < 0)
+		return len;
+	len += ret;
+
+	hostapd_drv_get_antennas(hapd, &tx_antenna, &rx_antenna);
+	ret = os_snprintf(buf + len, buflen - len, "RxAntennas=%d\n", rx_antenna);
+	if (ret >= buflen - len || ret < 0)
+		return len;
+	len += ret;
+
+	ret = os_snprintf(buf + len, buflen - len, "TxAntennas=%d\n", tx_antenna);
+	if (ret >= buflen - len || ret < 0)
+		return len;
+	len += ret;
+
+	if (!hostapd_get_oper_centr_freq_seg0_idx(hapd->iface->conf)) {
+		ret = os_snprintf(buf + len, buflen - len, "Cf1=UNKNOWN\n");
+		if (ret >= buflen - len || ret < 0)
+			return len;
+		len += ret;
+	} else {
+		ret = os_snprintf(buf + len, buflen - len, "Cf1=%d\n", hostapd_get_oper_centr_freq_seg0_idx(hapd->iface->conf));
+		if (ret >= buflen - len || ret < 0)
+			return len;
+		len += ret;
+	}
+	return len;
+}
+
 
 static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
 					      char *buf, char *reply,
@@ -3350,6 +3418,9 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
 	} else if (os_strncmp(buf, "GET_CAPABILITY ", 15) == 0) {
 		reply_len = hostapd_ctrl_iface_get_capability(
 			hapd, buf + 15, reply, reply_size);
+	} else if (os_strncmp(buf, "GET_RADIO_INFO", 14) == 0) {
+		reply_len = hostapd_ctrl_iface_get_radio_info(hapd, NULL, reply,
+			reply_size);
 	} else {
 		os_memcpy(reply, "UNKNOWN COMMAND\n", 16);
 		reply_len = 16;
