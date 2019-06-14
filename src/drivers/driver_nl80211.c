@@ -10994,7 +10994,7 @@ static int nl80211_get_antennas(void *priv, u32 *tx, u32 *rx)
 {
 	struct i802_bss *bss = priv;
 	struct nl_msg *msg;
-	u32 antennas[2];
+	u32 antennas[2] = {0, 0};
 
         if (!(msg = nl80211_cmd_msg(bss, 0, NL80211_CMD_GET_WIPHY)))
                 return -1;
