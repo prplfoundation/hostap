@@ -2927,7 +2927,7 @@ int hostapd_ctrl_iface_get_radio_info(struct hostapd_data *hapd,
 {
 	int ret = 0, len = 0;
 	enum hostapd_iface_state state = hapd->iface->state;
-	u32 tx_antenna, rx_antenna, tx_power;
+	u32 tx_antenna, rx_antenna, tx_power = 2000;
 
 	ret = os_snprintf(buf + len, buflen - len, "Name=%s\n",
 		hapd->conf->iface);
@@ -2964,6 +2964,13 @@ int hostapd_ctrl_iface_get_radio_info(struct hostapd_data *hapd,
 		return len;
 	len += ret;
 
+	/* FIXME Get actual values for these */
+	ret = os_snprintf(buf + len, buflen - len, "OperatingChannelBandwidt=0\nHostapdEnabled=2\n");
+	if (ret >= buflen - len || ret < 0)
+		return len;
+	len += ret;
+
+
 	if (!hostapd_get_oper_centr_freq_seg0_idx(hapd->iface->conf)) {
 		ret = os_snprintf(buf + len, buflen - len, "Cf1=UNKNOWN\n");
 		if (ret >= buflen - len || ret < 0)
@@ -2978,6 +2985,70 @@ int hostapd_ctrl_iface_get_radio_info(struct hostapd_data *hapd,
 	return len;
 }
 
+
+static int hostapd_ctrl_iface_get_vap_measurements(struct hostapd_data *hapd,
+						   const char *ifname, char *reply,
+						   size_t reply_size)
+{
+	int ret = 0;
+	size_t len = 0;
+	size_t i;
+
+	for (i = 0; i < hapd->iface->num_bss; i++) {
+		if (os_strcmp(ifname, hapd->iface->bss[i]->conf->iface) == 0) {
+			hapd = hapd->iface->bss[i];
+			goto hapd_found;
+		}
+	}
+
+	ret = os_snprintf(reply, reply_size, "FAIL-NO-IFNAME-MATCH\n");
+	if (os_snprintf_error(reply_size, ret))
+		return -1;
+	return ret;
+
+hapd_found:
+	ret = os_snprintf(reply + len, reply_size - len,
+			  " BSSID=" MACSTR  "\nSSID=%s\n",
+			    MAC2STR(hapd->own_addr),
+			    wpa_ssid_txt(hapd->conf->ssid.ssid,
+					 hapd->conf->ssid.ssid_len));
+	if (ret < 0)
+		return ret;
+	len += ret;
+
+	/* FIXME fill these in */
+	ret = os_snprintf(reply + len, reply_size - len,
+			  "BytesSent=0\nBytesReceived=0\n"
+			  "PacketsSent=0\nPacketsReceived=0\n"
+			  "RetransCount=0\nErrorsSent=0\nErrorsReceived=0\n");
+	if (ret < 0)
+		return ret;
+	len += ret;
+
+	return len;
+}
+
+static int hostapd_ctrl_iface_get_acs_report(struct hostapd_data *hapd,
+					     char *reply, size_t reply_size)
+{
+	int ret = 0;
+	int len = 0;
+
+	/* FIXME fill these in */
+	ret = os_snprintf(reply + len, reply_size - len,
+			  "Ch=1 BW=20 DFS=0 bss=1\n"
+			  "Ch=2 BW=20 DFS=0 bss=1\n"
+			  "Ch=3 BW=40 DFS=0 bss=1\n"
+			  "Ch=12 BW=40 DFS=0 bss=0\n"
+			  "Ch=36 BW=80 DFS=0 bss=0\n"
+			  "Ch=100 BW=80 DFS=1 bss=0\n");
+
+	if (ret < 0)
+		return ret;
+	len += ret;
+
+	return len;
+}
 
 static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
 					      char *buf, char *reply,
@@ -3421,6 +3492,12 @@ static int hostapd_ctrl_iface_receive_process(struct hostapd_data *hapd,
 	} else if (os_strncmp(buf, "GET_RADIO_INFO", 14) == 0) {
 		reply_len = hostapd_ctrl_iface_get_radio_info(hapd, NULL, reply,
 			reply_size);
+	} else if (os_strncmp(buf, "GET_VAP_MEASUREMENTS", 20) == 0) {
+		reply_len = hostapd_ctrl_iface_get_vap_measurements(hapd,
+			buf + 21, reply, reply_size);
+	} else if (os_strncmp(buf, "GET_ACS_REPORT", 14) == 0) {
+		reply_len = hostapd_ctrl_iface_get_acs_report(hapd,
+			reply, reply_size);
 	} else {
 		os_memcpy(reply, "UNKNOWN COMMAND\n", 16);
 		reply_len = 16;
